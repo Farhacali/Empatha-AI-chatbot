@@ -1,0 +1,134 @@
+6. Enhanced Frontend Integration
+Frontend Chat Component (React)
+javascriptimport React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+
+const EmpathaChat = () => {
+  const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  useEffect(() => {
+    const newSocket = io(process.env.REACT_APP_BACKEND_URL);
+    setSocket(newSocket);
+
+    newSocket.on('response', (data) => {
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: data.response,
+        emotion: data.emotion,
+        timestamp: data.timestamp,
+        actions: data.actions
+      }]);
+      setIsTyping(false);
+    });
+
+    newSocket.on('reminder', (data) => {
+      // Show reminder notification
+      showNotification(data);
+    });
+
+    return () => newSocket.close();
+  }, []);
+
+  const sendMessage = () => {
+    if (inputMessage.trim() && socket) {
+      const message = {
+        type: 'user',
+        content: inputMessage,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, message]);
+      setIsTyping(true);
+      
+      socket.emit('message', {
+        message: inputMessage,
+        userId: localStorage.getItem('userId') // Get from auth
+      });
+      
+      setInputMessage('');
+    }
+  };
+
+  const showNotification = (reminder) => {
+    if (Notification.permission === 'granted') {
+      new Notification('Empatha Reminder', {
+        body: reminder.message,
+        icon: '/empatha-icon.png'
+      });
+    }
+  };
+
+  return (
+    <div className="chat-container">
+      {/* Your existing chat UI */}
+      <div className="messages">
+        {messages.map((msg, index) => (
+          <div key={index} className={`message ${msg.type}`}>
+            {msg.content}
+            {msg.emotion && (
+              <span className="emotion-tag">{msg.emotion}</span>
+            )}
+            {msg.actions && msg.actions.length > 0 && (
+              <div className="actions">
+                {msg.actions.map((action, i) => (
+                  <div key={i} className="action-result">
+                    ✓ {action.action} completed
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {isTyping && <div className="typing-indicator">Empatha is thinking...</div>}
+      </div>
+      
+      <div className="input-area">
+        <input
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="Type your message..."
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
+    </div>
+  );
+};
+
+export default EmpathaChat;
+7. Deployment with Docker
+docker-compose.yml
+yamlversion: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:5000
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/empatha
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
