@@ -6,29 +6,23 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
-// Initialize Express app
 const app = express();
-
-// Create HTTP server for socket.io
 const server = http.createServer(app);
-
-// Setup Socket.IO without CORS (same origin)
 const io = new Server(server);
 
-// Serve the frontend build (from frontend/build folder)
-app.use(express.static(path.join(__dirname, 'frontend', 'build')));
+// ✅ Serve static frontend files
+app.use(express.static(path.join(__dirname, 'frontend'))); // ← serving raw HTML/CSS/JS
 
-// Fallback route for React SPA (Single Page Application)
+// ✅ Handle unmatched routes (SPA or fallback)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// Handle socket.io connections
+// ✅ Socket.IO logic
 io.on('connection', (socket) => {
   console.log('✅ Client connected:', socket.id);
 
   socket.on('chat message', (msg) => {
-    console.log('📨 Message received:', msg);
     io.emit('chat message', msg);
   });
 
@@ -37,9 +31,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
+// ✅ Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server + Socket.IO running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
 
