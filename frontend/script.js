@@ -1,9 +1,8 @@
 // frontend/script.js
 // Change this if your backend runs on another host
 // Example in frontend JavaScript
-const socket = io("https://empatha-ai-chatbot-1.onrender.com", {
-  transports: ["websocket"], // optional but recommended for Render
-});
+const socket = io(); // ✅ Auto-connect to same origin, no CORS/WebSocket URL issues
+
 
 const messagesContainer = document.querySelector('.messages');
 const input = document.createElement('input');
