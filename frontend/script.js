@@ -1,5 +1,7 @@
 // frontend/script.js
-const socket = io('http://localhost:5000'); // Change this if your backend runs on another host
+// Change this if your backend runs on another host
+// Example in frontend JavaScript
+const socket = io("https://empatha-ai-chatbot-1.onrender.com"); // Use your deployed backend URL
 
 const messagesContainer = document.querySelector('.messages');
 const input = document.createElement('input');
