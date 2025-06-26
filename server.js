@@ -1,42 +1,35 @@
 // Dependencies
+// server.js
+
 const express = require('express');
-const mongoose = require('mongoose');
-const path = require('path');
-const dotenv = require('dotenv');
-const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
-// Load environment variables
-dotenv.config();
-
-// Express app setup
+// Initialize Express app
 const app = express();
-app.use(cors({ origin: '*' })); // Replace with frontend domain in production
-app.use(express.json());
 
-// Optional test route to check if server is alive
-app.get('/', (req, res) => {
-  res.send('Empatha AI backend is running');
-});
-
-// Create HTTP server (required for socket.io)
+// Create HTTP server for socket.io
 const server = http.createServer(app);
 
-// Setup Socket.IO with CORS
-const io = new Server(server, {
-  cors: {
-    origin: '*', // Replace with frontend Render domain if needed
-    methods: ['GET', 'POST'],
-  }
+// Setup Socket.IO without CORS (same origin)
+const io = new Server(server);
+
+// Serve the frontend build (from frontend/build folder)
+app.use(express.static(path.join(__dirname, 'frontend', 'build')));
+
+// Fallback route for React SPA (Single Page Application)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
-// Handle socket connections
+// Handle socket.io connections
 io.on('connection', (socket) => {
-  console.log('✅ New client connected:', socket.id);
+  console.log('✅ Client connected:', socket.id);
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg); // broadcast to all clients
+    console.log('📨 Message received:', msg);
+    io.emit('chat message', msg);
   });
 
   socket.on('disconnect', () => {
@@ -44,8 +37,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start server
+// Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server + Socket.IO running at http://localhost:${PORT}`);
+  console.log(`🚀 Server + Socket.IO running on http://localhost:${PORT}`);
 });
+
