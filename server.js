@@ -7,6 +7,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
+const { detectEmotion } = require('./utils/emotion'); // ✅ Emotion detection
 
 dotenv.config();
 
@@ -79,10 +80,13 @@ io.on('connection', (socket) => {
 
       const reply = groqResponse.data.choices[0].message.content.trim();
 
-      // ✅ Send AI reply to client
+      // ✅ Detect emotion from AI reply
+      const emotion = await detectEmotion(reply);
+
+      // ✅ Send AI reply with emotion to client
       socket.emit('response', {
         response: reply,
-        emotion: 'neutral', // You can add emotion detection later
+        emotion: emotion,
         actions: []
       });
 
@@ -106,4 +110,3 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server + AI Chat running at http://localhost:${PORT}`);
 });
-
