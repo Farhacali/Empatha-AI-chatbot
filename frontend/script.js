@@ -1,5 +1,5 @@
 // Connects to the same origin where your app is hosted
-const socket = io();
+/*const socket = io();
 
 // Chat input and button creation
 const messagesContainer = document.querySelector('.messages');
