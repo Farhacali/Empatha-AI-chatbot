@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Empatha - Your Emotional Wellness Companion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <style>
         * {
             margin: 0;
@@ -63,6 +64,23 @@
             font-size: 14px;
             color: #888;
             margin-top: 2px;
+        }
+
+        .connection-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .connection-status.connected {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
         }
 
         /* Navigation */
@@ -146,6 +164,7 @@
             padding: 32px;
             text-align: center;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .feature-card:hover {
@@ -246,11 +265,18 @@
             overflow-y: auto;
             padding: 20px 0;
             min-height: 400px;
+            max-height: 600px;
         }
 
         .message {
             margin-bottom: 20px;
             max-width: 70%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message.ai {
@@ -280,6 +306,54 @@
 
         .heart-icon {
             color: #8b5cf6;
+        }
+
+        .emotion-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .emotion-happy { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .emotion-sad { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .emotion-anxious { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .emotion-neutral { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+
+        .typing-indicator {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 20px;
+            border-bottom-left-radius: 6px;
+            padding: 16px 20px;
+            max-width: 70%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingDot {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
         }
 
         .chat-input-container {
@@ -318,6 +392,11 @@
             justify-content: center;
             color: white;
             font-size: 18px;
+            transition: transform 0.2s ease;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
         }
 
         .emotion-buttons {
@@ -346,6 +425,7 @@
         .emotion-btn:hover {
             border-color: #8b5cf6;
             color: white;
+            transform: translateY(-2px);
         }
 
         /* Mood Tracker Page */
@@ -407,6 +487,7 @@
         .mood-option:hover {
             border-color: #8b5cf6;
             background: #2a1f3d;
+            transform: translateY(-2px);
         }
 
         .mood-option.selected {
@@ -509,6 +590,7 @@
         .action-item:hover {
             border-color: #3a3a3a;
             background: #2a2a2a;
+            transform: translateX(4px);
         }
 
         /* Recent Mood Entries */
@@ -535,6 +617,12 @@
             border: 1px solid #2a2a2a;
             border-radius: 12px;
             margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .mood-entry:hover {
+            border-color: #3a3a3a;
+            transform: translateX(4px);
         }
 
         .entry-mood {
@@ -579,25 +667,6 @@
             font-style: italic;
             color: #ccc;
             font-size: 14px;
-        }
-
-        /* Profile Section */
-        .profile-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            height: 100vh;
-            width: 300px;
-            background: #111;
-            border-left: 1px solid #2a2a2a;
-            padding: 20px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .profile-sidebar.open {
-            transform: translateX(0);
         }
 
         /* Responsive Design */
@@ -657,6 +726,9 @@
                     <p>Always here to listen</p>
                 </div>
             </div>
+            <div class="connection-status" id="connectionStatus">
+                <span id="statusText">Connecting...</span>
+            </div>
         </header>
 
         <!-- Navigation -->
@@ -684,13 +756,13 @@
             </div>
 
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card" onclick="showPage('chat')">
                     <div class="feature-icon">💜</div>
                     <h3>Emotional Intelligence</h3>
                     <p>Understands and responds to your emotions with genuine compassion</p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card" onclick="showPage('chat')">
                     <div class="feature-icon">💬</div>
                     <h3>Real-time Support</h3>
                     <p>24/7 availability for emotional support and wellness guidance</p>
@@ -702,7 +774,7 @@
                     <p>Your conversations are private and handled with care</p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card" onclick="showPage('mood')">
                     <div class="feature-icon">✨</div>
                     <h3>Personalized Care</h3>
                     <p>Learns your patterns to provide tailored wellness support</p>
@@ -711,7 +783,7 @@
 
             <div class="cta-buttons">
                 <button class="btn btn-primary" onclick="showPage('chat')">Start Chatting with Empatha</button>
-                <button class="btn btn-secondary">Learn More</button>
+                <button class="btn btn-secondary" onclick="showPage('mood')">Track Your Mood</button>
             </div>
         </div>
 
@@ -723,7 +795,7 @@
                         <div>Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💙</div>
                         <div class="message-time">
                             <span class="heart-icon">💜</span>
-                            <span>10:38 pm</span>
+                            <span id="welcomeTime"></span>
                         </div>
                     </div>
                 </div>
@@ -746,6 +818,7 @@
         <div class="page" id="mood">
             <div class="mood-header">
                 <h1>Track your emotional journey and discover patterns in your wellness</h1>
+                <p>Select your current mood to log your emotional state</p>
             </div>
 
             <div class="mood-content">
@@ -756,23 +829,23 @@
                     </div>
                     
                     <div class="mood-options">
-                        <div class="mood-option" onclick="selectMood('very-happy')">
+                        <div class="mood-option" onclick="selectMood('very-happy', '☀️', 'Very Happy', 9)">
                             <div class="mood-icon">☀️</div>
                             <div class="mood-label">Very Happy</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('happy')">
+                        <div class="mood-option" onclick="selectMood('happy', '😊', 'Happy', 7)">
                             <div class="mood-icon">😊</div>
                             <div class="mood-label">Happy</div>
                         </div>
-                        <div class="mood-option selected" onclick="selectMood('neutral')">
+                        <div class="mood-option selected" onclick="selectMood('neutral', '😐', 'Neutral', 5)">
                             <div class="mood-icon">😐</div>
                             <div class="mood-label">Neutral</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('sad')">
+                        <div class="mood-option" onclick="selectMood('sad', '☹️', 'Sad', 3)">
                             <div class="mood-icon">☹️</div>
                             <div class="mood-label">Sad</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('very-sad')">
+                        <div class="mood-option" onclick="selectMood('very-sad', '⚡', 'Very Sad', 1)">
                             <div class="mood-icon">⚡</div>
                             <div class="mood-label">Very Sad</div>
                         </div>
@@ -786,22 +859,22 @@
                     </div>
 
                     <div class="mood-score">
-                        <div class="score-number">6/10</div>
+                        <div class="score-number" id="averageScore">6/10</div>
                         <div class="score-label">Average mood score</div>
                     </div>
 
                     <div class="mood-breakdown">
                         <div class="mood-stat">
                             <span class="stat-label">Happy days</span>
-                            <span class="stat-value">4</span>
+                            <span class="stat-value" id="happyDays">4</span>
                         </div>
                         <div class="mood-stat">
                             <span class="stat-label">Neutral days</span>
-                            <span class="stat-value">2</span>
+                            <span class="stat-value" id="neutralDays">2</span>
                         </div>
                         <div class="mood-stat">
                             <span class="stat-label">Difficult days</span>
-                            <span class="stat-value">1</span>
+                            <span class="stat-value" id="difficultDays">1</span>
                         </div>
                     </div>
 
@@ -810,9 +883,17 @@
                             <span>📋</span>
                             <span>Quick Actions</span>
                         </div>
-                        <div class="action-item">
+                        <div class="action-item" onclick="startMeditation()">
                             <span>🧘</span>
                             <span>Guided meditation</span>
+                        </div>
+                        <div class="action-item" onclick="showPage('chat')">
+                            <span>💬</span>
+                            <span>Chat with Empatha</span>
+                        </div>
+                        <div class="action-item" onclick="showJournalPrompt()">
+                            <span>📝</span>
+                            <span>Daily journal prompt</span>
                         </div>
                     </div>
                 </div>
@@ -820,32 +901,8 @@
 
             <div class="mood-entries">
                 <div class="entries-header">Recent Mood Entries</div>
-                
-                <div class="mood-entry">
-                    <div class="entry-mood">😊</div>
-                    <div class="entry-details">
-                        <div class="entry-tag happy">happy</div>
-                        <div class="entry-meta">8/10 intensity · 26/7/2025 at 08:38 pm</div>
-                        <div class="entry-note">"Had a great conversation with my family"</div>
-                    </div>
-                </div>
-
-                <div class="mood-entry">
-                    <div class="entry-mood">😐</div>
-                    <div class="entry-details">
-                        <div class="entry-tag neutral">neutral</div>
-                        <div class="entry-meta">6/10 intensity · 25/7/2025 at 10:38 pm</div>
-                        <div class="entry-note">"Feeling okay, just a regular day"</div>
-                    </div>
-                </div>
-
-                <div class="mood-entry">
-                    <div class="entry-mood">☹️</div>
-                    <div class="entry-details">
-                        <div class="entry-tag sad">sad</div>
-                        <div class="entry-meta">4/10 intensity · 24/7/2025 at 10:38 pm</div>
-                        <div class="entry-note">"Missing my old friends today"</div>
-                    </div>
+                <div id="moodEntriesList">
+                    <!-- Dynamic mood entries will be populated here -->
                 </div>
             </div>
         </div>
@@ -858,25 +915,25 @@
             </div>
             
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card" onclick="showJournalPrompt()">
                     <div class="feature-icon">📔</div>
                     <h3>Journal Prompt</h3>
                     <p>Daily reflection prompts to explore your emotions</p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card" onclick="contactSupport()">
                     <div class="feature-icon">💬</div>
                     <h3>Contact Support</h3>
                     <p>Get help from our wellness support team</p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card" onclick="toggleNotifications()">
                     <div class="feature-icon">🔔</div>
                     <h3>Notifications</h3>
                     <p>Set reminders for check-ins and wellness activities</p>
                 </div>
 
-                <div class="feature-card">
+                <div class="feature-card" onclick="showWellnessGoals()">
                     <div class="feature-icon">🎯</div>
                     <h3>Wellness Goals</h3>
                     <p>Track your mental health and wellness objectives</p>
@@ -886,31 +943,92 @@
     </div>
 
     <script>
-        // Sample AI responses
-        const responses = {
+        // Real-time data and Socket.IO integration
+        let socket;
+        let currentPage = 'home';
+        let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
+        let currentMood = { type: 'neutral', score: 5 };
+        
+        const userId = 'user_' + Date.now();
+
+        // Initialize Socket.IO connection
+        function initializeSocket() {
+            try {
+                socket = io();
+                
+                socket.on('connect', () => {
+                    console.log('Connected to server:', socket.id);
+                    updateConnectionStatus(true);
+                });
+
+                socket.on('disconnect', () => {
+                    console.log('Disconnected from server');
+                    updateConnectionStatus(false);
+                });
+
+                socket.on('response', (data) => {
+                    removeTypingIndicator();
+                    addMessage(data.response, 'ai', data.emotion);
+                });
+
+                socket.on('reminder', (data) => {
+                    showNotification(`🔔 Reminder: ${data.message}`);
+                });
+
+                socket.on('error', (err) => {
+                    removeTypingIndicator();
+                    addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+                    console.error('Socket error:', err);
+                });
+
+            } catch (error) {
+                console.log('Socket.IO not available, using fallback responses');
+                updateConnectionStatus(false);
+            }
+        }
+
+        // Update connection status indicator
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                statusEl.className = 'connection-status connected';
+                statusText.textContent = 'Connected';
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                statusText.textContent = 'Offline Mode';
+            }
+        }
+
+        // Sample AI responses for offline mode
+        const offlineResponses = {
             'happy': [
                 "That's wonderful! 😊 I'm so glad you're feeling happy. What's bringing you joy today?",
-                "Your happiness brightens my day! ✨ Would you like to share what's making you feel so good?"
+                "Your happiness brightens my day! ✨ Would you like to share what's making you feel so good?",
+                "I love hearing that you're happy! 🌟 Happiness is contagious - tell me more about what's going well!"
             ],
             'sad': [
                 "I hear you, and I want you to know that it's okay to feel sad. 💙 Your feelings are completely valid. Would you like to talk about what's troubling you?",
-                "I'm here with you through this difficult moment. 🤗 Sometimes sadness is our heart's way of processing important feelings."
+                "I'm here with you through this difficult moment. 🤗 Sometimes sadness is our heart's way of processing important feelings.",
+                "Thank you for sharing how you're feeling. 🫂 It takes courage to acknowledge sadness. I'm here to listen and support you."
             ],
             'anxious': [
                 "I understand that anxiety can feel overwhelming. Let's take a moment together to breathe. 🌬️ In for 4, hold for 4, out for 6. You're safe right now.",
-                "Anxiety is your mind trying to protect you, but sometimes it works too hard. 💜 Let's work through this together with some calming techniques."
+                "Anxiety is your mind trying to protect you, but sometimes it works too hard. 💜 Let's work through this together with some calming techniques.",
+                "I notice you're feeling anxious. 🤍 Remember that this feeling is temporary. Would you like to try a grounding exercise together?"
             ],
             'motivation': [
                 "You are stronger than you think! 💪 Every challenge you face is an opportunity to grow. What's one small step you can take today?",
-                "I believe in you! ✨ Remember, progress isn't always linear, but every step forward counts. You've overcome difficulties before."
+                "I believe in you! ✨ Remember, progress isn't always linear, but every step forward counts. You've overcome difficulties before.",
+                "Your desire for motivation shows your inner strength. 🌟 What would make you feel proud of yourself today?"
             ],
             'default': [
                 "Thank you for sharing that with me. I'm here to listen and support you. 💙 How can I help you feel better today?",
-                "I hear you, and your feelings matter. Would you like to explore this feeling together? 🤗"
+                "I hear you, and your feelings matter. Would you like to explore this feeling together? 🤗",
+                "I appreciate you opening up to me. 💜 What would be most helpful for you right now?"
             ]
         };
-
-        let currentPage = 'home';
 
         // Page navigation
         function showPage(pageId) {
@@ -928,9 +1046,27 @@
             document.getElementById(pageId).classList.add('active');
 
             // Activate corresponding nav item
-            event.target.closest('.nav-item').classList.add('active');
+            const navItems = document.querySelectorAll('.nav-item');
+            const pageIndex = ['home', 'chat', 'mood', 'profile'].indexOf(pageId);
+            if (pageIndex !== -1 && navItems[pageIndex]) {
+                navItems[pageIndex].classList.add('active');
+            }
 
             currentPage = pageId;
+
+            // Initialize page-specific content
+            if (pageId === 'mood') {
+                updateMoodStats();
+                renderMoodEntries();
+            } else if (pageId === 'chat') {
+                // Add initial message if chat is empty
+                const messages = document.getElementById('chatMessages');
+                if (messages.children.length === 1) {
+                    setTimeout(() => {
+                        addMessage("Feel free to share anything that's on your mind. I'm here to listen without judgment. 💫", 'ai');
+                    }, 2000);
+                }
+            }
         }
 
         // Chat functionality
@@ -942,31 +1078,45 @@
                 addMessage(message, 'user');
                 input.value = '';
                 
-                // Generate AI response
-                setTimeout(() => {
-                    generateResponse(message);
-                }, 1000 + Math.random() * 1000);
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Send via Socket.IO if connected, otherwise use offline response
+                if (socket && socket.connected) {
+                    socket.emit('message', { message, userId });
+                } else {
+                    // Fallback to offline responses
+                    setTimeout(() => {
+                        generateOfflineResponse(message);
+                    }, 1000 + Math.random() * 2000);
+                }
             }
         }
 
         function selectEmotion(emotion) {
             const emotionMessages = {
-                'happy': "I'm feeling really happy today!",
-                'sad': "I'm feeling quite sad right now.",
-                'anxious': "I'm feeling anxious and need some support.",
-                'motivation': "I could really use some motivation right now."
+                'happy': "I'm feeling really happy today! 😊",
+                'sad': "I'm feeling quite sad right now. 😢",
+                'anxious': "I'm feeling anxious and need some support. 😰",
+                'motivation': "I could really use some motivation right now. 💪"
             };
 
             addMessage(emotionMessages[emotion], 'user');
+            showTypingIndicator();
             
-            setTimeout(() => {
-                const responseList = responses[emotion] || responses['default'];
-                const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
-                addMessage(randomResponse, 'ai');
-            }, 1500);
+            if (socket && socket.connected) {
+                socket.emit('message', { message: emotionMessages[emotion], userId, emotion });
+            } else {
+                setTimeout(() => {
+                    const responseList = offlineResponses[emotion] || offlineResponses['default'];
+                    const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
+                    removeTypingIndicator();
+                    addMessage(randomResponse, 'ai', emotion);
+                }, 1500);
+            }
         }
 
-        function addMessage(text, sender) {
+        function addMessage(text, sender, emotion = null) {
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
@@ -974,60 +1124,290 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
+            let messageContent = '';
+            if (emotion && sender === 'ai') {
+                messageContent += `<div class="emotion-tag emotion-${emotion}">${emotion}</div>`;
+            }
+            messageContent += `<div>${text}</div>`;
+            
             if (sender === 'ai') {
-                messageDiv.innerHTML = `
-                    <div>${text}</div>
+                messageContent += `
                     <div class="message-time">
                         <span class="heart-icon">💜</span>
                         <span>${timeStr}</span>
                     </div>
                 `;
             } else {
-                messageDiv.innerHTML = `
-                    <div>${text}</div>
+                messageContent += `
                     <div class="message-time">
                         <span>${timeStr}</span>
                     </div>
                 `;
             }
             
+            messageDiv.innerHTML = messageContent;
             messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Auto-save mood if emotional message
+            if (sender === 'user' && emotion) {
+                autoSaveMoodFromEmotion(emotion, text);
+            }
+        }
+
+        function generateOfflineResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            let responseType = 'default';
+            let detectedEmotion = 'neutral';
+            
+            if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great') || lowerMessage.includes('joy')) {
+                responseType = 'happy';
+                detectedEmotion = 'happy';
+            } else if (lowerMessage.includes('sad') || lowerMessage.includes('down') || lowerMessage.includes('upset') || lowerMessage.includes('cry')) {
+                responseType = 'sad';
+                detectedEmotion = 'sad';
+            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress') || lowerMessage.includes('nervous')) {
+                responseType = 'anxious';
+                detectedEmotion = 'anxious';
+            } else if (lowerMessage.includes('motivat') || lowerMessage.includes('inspire') || lowerMessage.includes('encourage') || lowerMessage.includes('help')) {
+                responseType = 'motivation';
+                detectedEmotion = 'neutral';
+            }
+            
+            const responseList = offlineResponses[responseType];
+            const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
+            
+            removeTypingIndicator();
+            addMessage(randomResponse, 'ai', detectedEmotion);
+        }
+
+        function showTypingIndicator() {
+            removeTypingIndicator();
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div>Empatha is thinking</div>
+                <div class="typing-dots">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function generateResponse(userMessage) {
-            const lowerMessage = userMessage.toLowerCase();
-            let responseType = 'default';
-            
-            if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
-                responseType = 'happy';
-            } else if (lowerMessage.includes('sad') || lowerMessage.includes('down') || lowerMessage.includes('upset')) {
-                responseType = 'sad';
-            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress')) {
-                responseType = 'anxious';
-            } else if (lowerMessage.includes('motivat') || lowerMessage.includes('inspire') || lowerMessage.includes('encourage')) {
-                responseType = 'motivation';
-            }
-            
-            const responseList = responses[responseType];
-            const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
-            addMessage(randomResponse, 'ai');
+        function removeTypingIndicator() {
+            const existing = document.getElementById('typingIndicator');
+            if (existing) existing.remove();
         }
 
         // Mood tracker functionality
-        function selectMood(moodType) {
+        function selectMood(moodType, icon, label, score) {
+            // Update UI
             document.querySelectorAll('.mood-option').forEach(option => {
                 option.classList.remove('selected');
             });
-            
             event.target.closest('.mood-option').classList.add('selected');
             
-            // You could save this mood selection to localStorage or send to backend
-            console.log('Mood selected:', moodType);
+            // Save mood entry
+            const moodEntry = {
+                id: Date.now(),
+                type: moodType,
+                icon: icon,
+                label: label,
+                score: score,
+                timestamp: new Date().toISOString(),
+                note: `Feeling ${label.toLowerCase()} today`
+            };
+            
+            moodEntries.unshift(moodEntry);
+            if (moodEntries.length > 50) moodEntries = moodEntries.slice(0, 50); // Keep last 50 entries
+            
+            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
+            currentMood = { type: moodType, score: score };
+            
+            updateMoodStats();
+            renderMoodEntries();
+            
+            showNotification(`Mood logged: ${label} 💜`);
         }
 
-        // Enter key support for chat
+        function autoSaveMoodFromEmotion(emotion, message) {
+            const emotionToMood = {
+                'happy': { type: 'happy', icon: '😊', label: 'Happy', score: 7 },
+                'sad': { type: 'sad', icon: '☹️', label: 'Sad', score: 3 },
+                'anxious': { type: 'sad', icon: '😰', label: 'Anxious', score: 4 },
+                'motivation': { type: 'neutral', icon: '😐', label: 'Neutral', score: 5 }
+            };
+            
+            const moodData = emotionToMood[emotion];
+            if (moodData) {
+                const moodEntry = {
+                    id: Date.now(),
+                    type: moodData.type,
+                    icon: moodData.icon,
+                    label: moodData.label,
+                    score: moodData.score,
+                    timestamp: new Date().toISOString(),
+                    note: message.substring(0, 100) + (message.length > 100 ? '...' : '')
+                };
+                
+                moodEntries.unshift(moodEntry);
+                if (moodEntries.length > 50) moodEntries = moodEntries.slice(0, 50);
+                
+                localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
+                updateMoodStats();
+            }
+        }
+
+        function updateMoodStats() {
+            const weekEntries = moodEntries.filter(entry => {
+                const entryDate = new Date(entry.timestamp);
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return entryDate >= weekAgo;
+            });
+            
+            if (weekEntries.length === 0) {
+                document.getElementById('averageScore').textContent = '6/10';
+                document.getElementById('happyDays').textContent = '4';
+                document.getElementById('neutralDays').textContent = '2';
+                document.getElementById('difficultDays').textContent = '1';
+                return;
+            }
+            
+            const averageScore = Math.round(weekEntries.reduce((sum, entry) => sum + entry.score, 0) / weekEntries.length);
+            const happyDays = weekEntries.filter(entry => entry.score >= 7).length;
+            const neutralDays = weekEntries.filter(entry => entry.score >= 4 && entry.score < 7).length;
+            const difficultDays = weekEntries.filter(entry => entry.score < 4).length;
+            
+            document.getElementById('averageScore').textContent = `${averageScore}/10`;
+            document.getElementById('happyDays').textContent = happyDays;
+            document.getElementById('neutralDays').textContent = neutralDays;
+            document.getElementById('difficultDays').textContent = difficultDays;
+        }
+
+        function renderMoodEntries() {
+            const container = document.getElementById('moodEntriesList');
+            container.innerHTML = '';
+            
+            const recentEntries = moodEntries.slice(0, 10);
+            
+            if (recentEntries.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #888; padding: 20px;">
+                        No mood entries yet. Select your mood above to get started! 🌟
+                    </div>
+                `;
+                return;
+            }
+            
+            recentEntries.forEach(entry => {
+                const entryDate = new Date(entry.timestamp);
+                const formattedDate = entryDate.toLocaleDateString('en-GB') + ' at ' + entryDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                const entryEl = document.createElement('div');
+                entryEl.className = 'mood-entry';
+                entryEl.innerHTML = `
+                    <div class="entry-mood">${entry.icon}</div>
+                    <div class="entry-details">
+                        <div class="entry-tag ${entry.type}">${entry.label}</div>
+                        <div class="entry-meta">${entry.score}/10 intensity · ${formattedDate}</div>
+                        <div class="entry-note">"${entry.note}"</div>
+                    </div>
+                `;
+                container.appendChild(entryEl);
+            });
+        }
+
+        // Profile page functions
+        function showJournalPrompt() {
+            const prompts = [
+                "What are three things you're grateful for today?",
+                "How did you show kindness to yourself or others today?",
+                "What emotions did you experience today, and what triggered them?",
+                "What's one thing you learned about yourself this week?",
+                "How can you practice self-compassion right now?"
+            ];
+            
+            const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+            showNotification(`📔 Today's Journal Prompt: ${randomPrompt}`);
+        }
+
+        function contactSupport() {
+            showNotification("💬 Support team contacted! Someone will reach out within 24 hours. Remember, if this is an emergency, please contact your local emergency services.");
+        }
+
+        function toggleNotifications() {
+            const enabled = localStorage.getItem('notificationsEnabled') !== 'false';
+            localStorage.setItem('notificationsEnabled', (!enabled).toString());
+            showNotification(`🔔 Notifications ${!enabled ? 'enabled' : 'disabled'}!`);
+        }
+
+        function showWellnessGoals() {
+            showNotification("🎯 Wellness goals feature coming soon! Track meditation streaks, mood improvements, and daily check-ins.");
+        }
+
+        function startMeditation() {
+            showNotification("🧘 Starting 5-minute guided meditation... Find a comfortable position and breathe deeply.");
+            // In a real app, this would start a meditation timer/guide
+        }
+
+        // Notification system
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #8b5cf6, #a855f7);
+                color: white;
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+                z-index: 10000;
+                max-width: 300px;
+                font-size: 14px;
+                font-weight: 500;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
+            // Set welcome time
+            const welcomeTime = document.getElementById('welcomeTime');
+            if (welcomeTime) {
+                welcomeTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+            
+            // Initialize Socket.IO
+            initializeSocket();
+            
+            // Setup enter key for chat
             const messageInput = document.getElementById('messageInput');
             if (messageInput) {
                 messageInput.addEventListener('keypress', function(e) {
@@ -1036,14 +1416,19 @@
                     }
                 });
             }
+            
+            // Load saved mood data
+            updateMoodStats();
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification("Welcome to Empatha! 💜 I'm here to support your emotional wellness journey.");
+            }, 2000);
         });
 
-        // Add some sample conversation after page loads
-        setTimeout(() => {
-            if (currentPage === 'chat') {
-                addMessage("Feel free to share anything that's on your mind. I'm here to listen without judgment. 💫", 'ai');
+        // Prevent form submission on enter
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
             }
-        }, 3000);
-    </script>
-</body>
-</html>
+        });
