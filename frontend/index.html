@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empatha - Your Emotional Wellness Companion</title>
+    <title>Empatha - AI Wellness Companion</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,326 +14,552 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0a0a;
-            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
             min-height: 100vh;
             overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
         /* Header */
         .header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             padding: 20px 40px;
-            border-bottom: 1px solid #2a2a2a;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(135deg, #8b5cf6, #a855f7);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-        }
-
-        .logo-text h1 {
             font-size: 24px;
-            font-weight: 600;
-            color: white;
         }
 
-        .logo-text p {
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .logo-subtitle {
             font-size: 14px;
-            color: #888;
-            margin-top: 2px;
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .connection-status {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .connection-status.connected {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .connection-status.disconnected {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
         }
 
         /* Navigation */
         .nav-container {
             display: flex;
             justify-content: center;
-            padding: 20px;
+            padding: 40px 20px;
         }
 
-        .navigation {
+        .nav-tabs {
             display: flex;
-            background: #1a1a1a;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
             border-radius: 50px;
             padding: 6px;
-            gap: 4px;
-            border: 1px solid #2a2a2a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .nav-item {
-            padding: 12px 24px;
-            border-radius: 50px;
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            font-weight: 500;
+        .nav-tab {
             display: flex;
             align-items: center;
             gap: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
         }
 
-        .nav-item.active {
+        .nav-tab.active {
             background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            color: white;
+            color: #ffffff;
         }
 
-        .nav-item:hover:not(.active) {
-            color: #ccc;
-            background: #2a2a2a;
+        .nav-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
         }
 
-        /* Page Content */
-        .page {
-            display: none;
-            flex: 1;
-            padding: 40px;
+        .nav-icon {
+            font-size: 18px;
         }
 
-        .page.active {
-            display: flex;
-            flex-direction: column;
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
         }
 
-        /* Home Page */
-        .home-hero {
+        /* Hero Section */
+        .hero-text {
             text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .home-hero h1 {
             font-size: 48px;
-            font-weight: 300;
-            margin-bottom: 20px;
-            color: #ddd;
+            font-weight: 400;
             line-height: 1.2;
+            margin-bottom: 80px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
+        /* Features Grid */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-bottom: 60px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 80px;
         }
 
         .feature-card {
-            background: #151515;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-            padding: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
             text-align: center;
             transition: all 0.3s ease;
-            cursor: pointer;
+            backdrop-filter: blur(10px);
         }
 
         .feature-card:hover {
-            border-color: #3a3a3a;
-            transform: translateY(-4px);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 20px;
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            margin: 0 auto 24px;
+            font-size: 28px;
         }
 
-        .feature-card:nth-child(1) .feature-icon {
+        .feature-icon.purple {
             background: linear-gradient(135deg, #8b5cf6, #a855f7);
         }
 
-        .feature-card:nth-child(2) .feature-icon {
-            background: linear-gradient(135deg, #10b981, #059669);
+        .feature-icon.teal {
+            background: linear-gradient(135deg, #14b8a6, #06b6d4);
         }
 
-        .feature-card:nth-child(3) .feature-icon {
+        .feature-icon.blue {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
         }
 
-        .feature-card:nth-child(4) .feature-icon {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        .feature-icon.orange {
+            background: linear-gradient(135deg, #f97316, #ea580c);
         }
 
-        .feature-card h3 {
-            font-size: 20px;
+        .feature-title {
+            font-size: 24px;
             font-weight: 600;
-            margin-bottom: 12px;
-            color: white;
+            margin-bottom: 16px;
+            color: #ffffff;
         }
 
-        .feature-card p {
-            color: #888;
+        .feature-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
             line-height: 1.5;
-            font-size: 15px;
         }
 
-        .cta-buttons {
+        /* CTA Buttons */
+        .cta-section {
             display: flex;
             justify-content: center;
             gap: 20px;
-            margin-top: 40px;
+            margin-bottom: 80px;
+            flex-wrap: wrap;
         }
 
-        .btn {
+        .cta-button {
             padding: 16px 32px;
             border-radius: 50px;
-            border: none;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-        }
-
-        .btn-secondary {
-            background: #2a2a2a;
-            color: white;
-            border: 1px solid #3a3a3a;
-        }
-
-        .btn-secondary:hover {
-            background: #3a3a3a;
-        }
-
-        /* Chat Page */
-        .chat-container {
             display: flex;
-            flex-direction: column;
-            height: 100%;
-            max-width: 800px;
-            margin: 0 auto;
+            align-items: center;
+            gap: 8px;
+            border: none;
         }
 
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 0;
-            min-height: 400px;
-            max-height: 600px;
+        .cta-primary {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            color: #ffffff;
         }
 
-        .message {
-            margin-bottom: 20px;
-            max-width: 70%;
-            animation: fadeIn 0.3s ease-in;
+        .cta-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .cta-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
         }
 
         @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Chat Section */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid #1a1a1a;
+        }
+
+        .chat-info h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .chat-status {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 20px;
+            max-width: 80%;
+            line-height: 1.5;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.ai {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            align-self: flex-start;
+            border-bottom-left-radius: 8px;
+        }
+
+        .message.user {
+            background: rgba(255, 255, 255, 0.1);
+            align-self: flex-end;
+            border-bottom-right-radius: 8px;
+        }
+
+        @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .message.ai {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 20px;
-            border-bottom-left-radius: 6px;
-            padding: 16px 20px;
+        .chat-input {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
         }
 
-        .message.user {
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 16px 50px 16px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .message-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            border-radius: 20px;
-            border-bottom-right-radius: 6px;
-            padding: 16px 20px;
-            margin-left: auto;
-        }
-
-        .message-time {
+            border: none;
+            border-radius: 50%;
+            color: #ffffff;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-            font-size: 13px;
-            color: #666;
+            justify-content: center;
+            transition: all 0.3s ease;
         }
 
-        .heart-icon {
-            color: #8b5cf6;
+        .send-btn:hover {
+            transform: translateY(-50%) scale(1.1);
         }
 
-        .emotion-tag {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            margin-bottom: 8px;
+        /* Mood Tracker Section */
+        .mood-tracker {
+            text-align: center;
         }
 
-        .emotion-happy { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .emotion-sad { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .emotion-anxious { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .emotion-neutral { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+        .mood-header {
+            margin-bottom: 40px;
+        }
 
-        .typing-indicator {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
+        .mood-header h2 {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .mood-header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .mood-selector {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            border-bottom-left-radius: 6px;
-            padding: 16px 20px;
-            max-width: 70%;
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .mood-question {
+            font-size: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mood-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mood-option {
+            flex: 1;
+            min-width: 120px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 24px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mood-option:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-4px);
+        }
+
+        .mood-option.selected {
+            border-color: #14b8a6;
+            background: rgba(20, 184, 166, 0.1);
+        }
+
+        .mood-emoji {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .mood-label {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* Profile Section */
+        .profile-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-header h2 {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .profile-card h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active {
+            background: #14b8a6;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: #ffffff;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            max-width: 200px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .typing-text {
+            font-size: 14px;
         }
 
         .typing-dots {
@@ -344,329 +571,23 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #8b5cf6;
-            animation: typingDot 1.4s infinite ease-in-out;
+            background: rgba(255, 255, 255, 0.8);
+            animation: typingDots 1.4s infinite ease-in-out;
         }
 
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-        @keyframes typingDot {
-            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-
-        .chat-input-container {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 50px;
-            padding: 16px 24px;
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .chat-input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-            outline: none;
-        }
-
-        .chat-input::placeholder {
-            color: #666;
-        }
-
-        .send-button {
-            background: linear-gradient(135deg, #8b5cf6, #a855f7);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            transition: transform 0.2s ease;
-        }
-
-        .send-button:hover {
-            transform: scale(1.05);
-        }
-
-        .emotion-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 20px;
-            padding: 20px;
-            background: #111;
-            border-radius: 16px;
-            border: 1px solid #2a2a2a;
-        }
-
-        .emotion-btn {
-            padding: 12px 20px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 50px;
-            color: #888;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .emotion-btn:hover {
-            border-color: #8b5cf6;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Mood Tracker Page */
-        .mood-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .mood-header h1 {
-            font-size: 32px;
-            margin-bottom: 12px;
-            color: white;
-            font-weight: 400;
-        }
-
-        .mood-header p {
-            color: #888;
-            font-size: 16px;
-        }
-
-        .mood-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 40px;
-        }
-
-        .mood-selector {
-            background: #151515;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-            padding: 32px;
-        }
-
-        .mood-question {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            font-size: 20px;
-            font-weight: 500;
-        }
-
-        .mood-options {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 16px;
-        }
-
-        .mood-option {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 12px;
-            padding: 20px 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .mood-option:hover {
-            border-color: #8b5cf6;
-            background: #2a1f3d;
-            transform: translateY(-2px);
-        }
-
-        .mood-option.selected {
-            border-color: #8b5cf6;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2));
-        }
-
-        .mood-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .mood-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #ccc;
-        }
-
-        .mood-stats {
-            background: #151515;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-            padding: 32px;
-        }
-
-        .stats-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 24px;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .mood-score {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .score-number {
-            font-size: 48px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #10b981, #059669);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .score-label {
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .mood-breakdown {
-            space-y: 16px;
-        }
-
-        .mood-stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .stat-label {
-            color: #ccc;
-        }
-
-        .stat-value {
-            font-weight: 600;
-            color: #10b981;
-        }
-
-        .quick-actions-section {
-            margin-top: 32px;
-        }
-
-        .actions-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .action-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .action-item:hover {
-            border-color: #3a3a3a;
-            background: #2a2a2a;
-            transform: translateX(4px);
-        }
-
-        /* Recent Mood Entries */
-        .mood-entries {
-            background: #151515;
-            border: 1px solid #2a2a2a;
-            border-radius: 16px;
-            padding: 32px;
-            margin-top: 32px;
-        }
-
-        .entries-header {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 24px;
-        }
-
-        .mood-entry {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .mood-entry:hover {
-            border-color: #3a3a3a;
-            transform: translateX(4px);
-        }
-
-        .entry-mood {
-            font-size: 24px;
-        }
-
-        .entry-details {
-            flex: 1;
-        }
-
-        .entry-tag {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: inline-block;
-        }
-
-        .entry-tag.happy {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .entry-tag.neutral {
-            background: rgba(156, 163, 175, 0.2);
-            color: #9ca3af;
-        }
-
-        .entry-tag.sad {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .entry-meta {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 4px;
-        }
-
-        .entry-note {
-            font-style: italic;
-            color: #ccc;
-            font-size: 14px;
+        @keyframes typingDots {
+            0%, 60%, 100% { 
+                transform: scale(0.8); 
+                opacity: 0.5; 
+            }
+            30% { 
+                transform: scale(1.2); 
+                opacity: 1; 
+            }
         }
 
         /* Responsive Design */
@@ -675,760 +596,434 @@
                 padding: 15px 20px;
             }
 
-            .page {
-                padding: 20px;
+            .main-content {
+                padding: 0 20px;
+            }
+
+            .hero-text {
+                font-size: 32px;
+                margin-bottom: 60px;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .mood-content {
-                grid-template-columns: 1fr;
                 gap: 20px;
             }
 
-            .mood-options {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .emotion-buttons {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .navigation {
+            .nav-tabs {
                 flex-wrap: wrap;
                 padding: 4px;
             }
 
-            .nav-item {
+            .nav-tab {
                 padding: 10px 16px;
                 font-size: 14px;
+            }
+
+            .cta-section {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mood-options {
+                flex-direction: column;
+            }
+
+            .mood-option {
+                min-width: auto;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <div class="logo-icon">💜</div>
-                <div class="logo-text">
-                    <h1>Empatha</h1>
-                    <p>Always here to listen</p>
-                </div>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-section">
+            <div class="logo">💝</div>
+            <div class="logo-text">
+                <div class="logo-title">Empatha</div>
+                <div class="logo-subtitle">Always here to listen</div>
             </div>
-            <div class="connection-status" id="connectionStatus">
-                <span id="statusText">Connecting...</span>
-            </div>
-        </header>
-
-        <!-- Navigation -->
-        <div class="nav-container">
-            <nav class="navigation">
-                <button class="nav-item active" onclick="showPage('home')">
-                    <span>💚</span> Home
-                </button>
-                <button class="nav-item" onclick="showPage('chat')">
-                    <span>💬</span> Chat
-                </button>
-                <button class="nav-item" onclick="showPage('mood')">
-                    <span>📊</span> Mood Tracker
-                </button>
-                <button class="nav-item" onclick="showPage('profile')">
-                    <span>👤</span> Profile
-                </button>
-            </nav>
         </div>
+        <div class="connection-status">Connecting...</div>
+    </div>
 
-        <!-- Home Page -->
-        <div class="page active" id="home">
-            <div class="home-hero">
-                <h1>Your emotionally intelligent AI companion for wellness and care</h1>
+    <!-- Navigation -->
+    <div class="nav-container">
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-section="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </div>
+            <div class="nav-tab" data-section="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </div>
+            <div class="nav-tab" data-section="mood">
+                <span class="nav-icon">📊</span>
+                <span>Mood Tracker</span>
+            </div>
+            <div class="nav-tab" data-section="profile">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Home Section -->
+        <div class="content-section active" id="home">
+            <div class="hero-text">
+                Your emotionally intelligent AI companion for wellness and care
             </div>
 
             <div class="features-grid">
-                <div class="feature-card" onclick="showPage('chat')">
-                    <div class="feature-icon">💜</div>
-                    <h3>Emotional Intelligence</h3>
-                    <p>Understands and responds to your emotions with genuine compassion</p>
-                </div>
-
-                <div class="feature-card" onclick="showPage('chat')">
-                    <div class="feature-icon">💬</div>
-                    <h3>Real-time Support</h3>
-                    <p>24/7 availability for emotional support and wellness guidance</p>
-                </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Safe & Secure</h3>
-                    <p>Your conversations are private and handled with care</p>
+                    <div class="feature-icon purple">💝</div>
+                    <h3 class="feature-title">Emotional Intelligence</h3>
+                    <p class="feature-description">Understands and responds to your emotions with genuine compassion</p>
                 </div>
-
-                <div class="feature-card" onclick="showPage('mood')">
-                    <div class="feature-icon">✨</div>
-                    <h3>Personalized Care</h3>
-                    <p>Learns your patterns to provide tailored wellness support</p>
+                <div class="feature-card">
+                    <div class="feature-icon teal">💬</div>
+                    <h3 class="feature-title">Real-time Support</h3>
+                    <p class="feature-description">24/7 availability for emotional support and wellness guidance</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon blue">🛡️</div>
+                    <h3 class="feature-title">Safe & Secure</h3>
+                    <p class="feature-description">Your conversations are private and handled with care</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon orange">✨</div>
+                    <h3 class="feature-title">Personalized Care</h3>
+                    <p class="feature-description">Learns your patterns to provide tailored wellness support</p>
                 </div>
             </div>
 
-            <div class="cta-buttons">
-                <button class="btn btn-primary" onclick="showPage('chat')">Start Chatting with Empatha</button>
-                <button class="btn btn-secondary" onclick="showPage('mood')">Track Your Mood</button>
+            <div class="cta-section">
+                <button class="cta-button cta-primary" onclick="switchTab('chat')">
+                    Start Chatting with Empatha
+                </button>
+                <button class="cta-button cta-secondary" onclick="switchTab('mood')">
+                    Track Your Mood
+                </button>
             </div>
         </div>
 
-        <!-- Chat Page -->
-        <div class="page" id="chat">
+        <!-- Chat Section -->
+        <div class="content-section" id="chat">
             <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message ai">
-                        <div>Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💙</div>
-                        <div class="message-time">
-                            <span class="heart-icon">💜</span>
-                            <span id="welcomeTime"></span>
-                        </div>
+                <div class="chat-header">
+                    <div class="chat-avatar">
+                        💝
+                        <div class="status-dot"></div>
+                    </div>
+                    <div class="chat-info">
+                        <h3>Empatha</h3>
+                        <div class="chat-status">Always here to listen</div>
                     </div>
                 </div>
-
-                <div class="chat-input-container">
-                    <input type="text" class="chat-input" placeholder="Share how you're feeling..." id="messageInput" maxlength="500">
-                    <button class="send-button" onclick="sendMessage()">➤</button>
+                
+                <div class="messages" id="messages">
+                    <div class="message ai">
+                        Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💙
+                    </div>
                 </div>
-
-                <div class="emotion-buttons">
-                    <button class="emotion-btn" onclick="selectEmotion('happy')">😊 Happy</button>
-                    <button class="emotion-btn" onclick="selectEmotion('sad')">😢 Sad</button>
-                    <button class="emotion-btn" onclick="selectEmotion('anxious')">😰 Anxious</button>
-                    <button class="emotion-btn" onclick="selectEmotion('motivation')">💪 Need motivation</button>
+                
+                <div class="chat-input">
+                    <div class="input-wrapper">
+                        <input type="text" class="message-input" placeholder="Share how you're feeling..." id="messageInput">
+                        <button class="send-btn" id="sendBtn">➤</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Mood Tracker Page -->
-        <div class="page" id="mood">
-            <div class="mood-header">
-                <h1>Track your emotional journey and discover patterns in your wellness</h1>
-                <p>Select your current mood to log your emotional state</p>
-            </div>
+        <!-- Mood Tracker Section -->
+        <div class="content-section" id="mood">
+            <div class="mood-tracker">
+                <div class="mood-header">
+                    <h2>Mood Tracker</h2>
+                    <p>Track your emotional journey and discover patterns in your wellness</p>
+                </div>
 
-            <div class="mood-content">
                 <div class="mood-selector">
                     <div class="mood-question">
-                        <span>💜</span>
-                        <span>How are you feeling right now?</span>
+                        💜 How are you feeling right now?
                     </div>
-                    
                     <div class="mood-options">
-                        <div class="mood-option" onclick="selectMood('very-happy', '☀️', 'Very Happy', 9)">
-                            <div class="mood-icon">☀️</div>
+                        <div class="mood-option" data-mood="very-happy">
+                            <span class="mood-emoji">☀️</span>
                             <div class="mood-label">Very Happy</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('happy', '😊', 'Happy', 7)">
-                            <div class="mood-icon">😊</div>
+                        <div class="mood-option" data-mood="happy">
+                            <span class="mood-emoji">😊</span>
                             <div class="mood-label">Happy</div>
                         </div>
-                        <div class="mood-option selected" onclick="selectMood('neutral', '😐', 'Neutral', 5)">
-                            <div class="mood-icon">😐</div>
+                        <div class="mood-option" data-mood="neutral">
+                            <span class="mood-emoji">😐</span>
                             <div class="mood-label">Neutral</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('sad', '☹️', 'Sad', 3)">
-                            <div class="mood-icon">☹️</div>
+                        <div class="mood-option" data-mood="sad">
+                            <span class="mood-emoji">😢</span>
                             <div class="mood-label">Sad</div>
                         </div>
-                        <div class="mood-option" onclick="selectMood('very-sad', '⚡', 'Very Sad', 1)">
-                            <div class="mood-icon">⚡</div>
+                        <div class="mood-option" data-mood="very-sad">
+                            <span class="mood-emoji">⚡</span>
                             <div class="mood-label">Very Sad</div>
                         </div>
                     </div>
                 </div>
-
-                <div class="mood-stats">
-                    <div class="stats-header">
-                        <span>📈</span>
-                        <span>This Week</span>
-                    </div>
-
-                    <div class="mood-score">
-                        <div class="score-number" id="averageScore">6/10</div>
-                        <div class="score-label">Average mood score</div>
-                    </div>
-
-                    <div class="mood-breakdown">
-                        <div class="mood-stat">
-                            <span class="stat-label">Happy days</span>
-                            <span class="stat-value" id="happyDays">4</span>
-                        </div>
-                        <div class="mood-stat">
-                            <span class="stat-label">Neutral days</span>
-                            <span class="stat-value" id="neutralDays">2</span>
-                        </div>
-                        <div class="mood-stat">
-                            <span class="stat-label">Difficult days</span>
-                            <span class="stat-value" id="difficultDays">1</span>
-                        </div>
-                    </div>
-
-                    <div class="quick-actions-section">
-                        <div class="actions-header">
-                            <span>📋</span>
-                            <span>Quick Actions</span>
-                        </div>
-                        <div class="action-item" onclick="startMeditation()">
-                            <span>🧘</span>
-                            <span>Guided meditation</span>
-                        </div>
-                        <div class="action-item" onclick="showPage('chat')">
-                            <span>💬</span>
-                            <span>Chat with Empatha</span>
-                        </div>
-                        <div class="action-item" onclick="showJournalPrompt()">
-                            <span>📝</span>
-                            <span>Daily journal prompt</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mood-entries">
-                <div class="entries-header">Recent Mood Entries</div>
-                <div id="moodEntriesList">
-                    <!-- Dynamic mood entries will be populated here -->
-                </div>
             </div>
         </div>
 
-        <!-- Profile Page -->
-        <div class="page" id="profile">
-            <div class="mood-header">
-                <h1>Your Profile & Settings</h1>
-                <p>Customize your Empatha experience</p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card" onclick="showJournalPrompt()">
-                    <div class="feature-icon">📔</div>
-                    <h3>Journal Prompt</h3>
-                    <p>Daily reflection prompts to explore your emotions</p>
+        <!-- Profile Section -->
+        <div class="content-section" id="profile">
+            <div class="profile-section">
+                <div class="profile-header">
+                    <h2>Profile Settings</h2>
+                    <p>Customize your Empatha experience</p>
                 </div>
 
-                <div class="feature-card" onclick="contactSupport()">
-                    <div class="feature-icon">💬</div>
-                    <h3>Contact Support</h3>
-                    <p>Get help from our wellness support team</p>
+                <div class="profile-card">
+                    <h3>👤 Personal Information</h3>
+                    <div class="setting-item">
+                        <span>Name</span>
+                        <span style="color: #14b8a6;">User</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Joined</span>
+                        <span style="color: rgba(255, 255, 255, 0.7);">July 2025</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Sessions</span>
+                        <span style="color: #14b8a6;">24</span>
+                    </div>
                 </div>
 
-                <div class="feature-card" onclick="toggleNotifications()">
-                    <div class="feature-icon">🔔</div>
-                    <h3>Notifications</h3>
-                    <p>Set reminders for check-ins and wellness activities</p>
+                <div class="profile-card">
+                    <h3>🔔 Notifications</h3>
+                    <div class="setting-item">
+                        <span>Daily Check-ins</span>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Mood Reminders</span>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Weekly Reports</span>
+                        <div class="toggle"></div>
+                    </div>
                 </div>
 
-                <div class="feature-card" onclick="showWellnessGoals()">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Wellness Goals</h3>
-                    <p>Track your mental health and wellness objectives</p>
+                <div class="profile-card">
+                    <h3>🛡️ Privacy & Security</h3>
+                    <div class="setting-item">
+                        <span>Data Encryption</span>
+                        <span style="color: #10b981;">Enabled</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Anonymous Mode</span>
+                        <div class="toggle"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Real-time data and Socket.IO integration
-        let socket;
-        let currentPage = 'home';
-        let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
-        let currentMood = { type: 'neutral', score: 5 };
-        
-        const userId = 'user_' + Date.now();
-
-        // Initialize Socket.IO connection
-        function initializeSocket() {
-            try {
-                socket = io();
-                
-                socket.on('connect', () => {
-                    console.log('Connected to server:', socket.id);
-                    updateConnectionStatus(true);
-                });
-
-                socket.on('disconnect', () => {
-                    console.log('Disconnected from server');
-                    updateConnectionStatus(false);
-                });
-
-                socket.on('response', (data) => {
-                    removeTypingIndicator();
-                    addMessage(data.response, 'ai', data.emotion);
-                });
-
-                socket.on('reminder', (data) => {
-                    showNotification(`🔔 Reminder: ${data.message}`);
-                });
-
-                socket.on('error', (err) => {
-                    removeTypingIndicator();
-                    addMessage('Sorry, I encountered an error. Please try again.', 'ai');
-                    console.error('Socket error:', err);
-                });
-
-            } catch (error) {
-                console.log('Socket.IO not available, using fallback responses');
-                updateConnectionStatus(false);
-            }
-        }
-
-        // Update connection status indicator
-        function updateConnectionStatus(connected) {
-            const statusEl = document.getElementById('connectionStatus');
-            const statusText = document.getElementById('statusText');
+        // Tab switching functionality
+        function switchTab(sectionName) {
+            // Remove active class from all tabs and sections
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
             
-            if (connected) {
-                statusEl.className = 'connection-status connected';
-                statusText.textContent = 'Connected';
+            // Add active class to selected tab and section
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+            document.getElementById(sectionName).classList.add('active');
+
+            // Update connection status
+            updateConnectionStatus();
+        }
+
+        // Update connection status
+        function updateConnectionStatus() {
+            const statusEl = document.querySelector('.connection-status');
+            const activeTab = document.querySelector('.nav-tab.active').getAttribute('data-section');
+            
+            if (activeTab === 'chat') {
+                statusEl.textContent = 'Connected';
             } else {
-                statusEl.className = 'connection-status disconnected';
-                statusText.textContent = 'Offline Mode';
+                statusEl.textContent = 'Ready';
             }
         }
 
-        // Sample AI responses for offline mode
-        const offlineResponses = {
-            'happy': [
-                "That's wonderful! 😊 I'm so glad you're feeling happy. What's bringing you joy today?",
-                "Your happiness brightens my day! ✨ Would you like to share what's making you feel so good?",
-                "I love hearing that you're happy! 🌟 Happiness is contagious - tell me more about what's going well!"
-            ],
-            'sad': [
-                "I hear you, and I want you to know that it's okay to feel sad. 💙 Your feelings are completely valid. Would you like to talk about what's troubling you?",
-                "I'm here with you through this difficult moment. 🤗 Sometimes sadness is our heart's way of processing important feelings.",
-                "Thank you for sharing how you're feeling. 🫂 It takes courage to acknowledge sadness. I'm here to listen and support you."
-            ],
-            'anxious': [
-                "I understand that anxiety can feel overwhelming. Let's take a moment together to breathe. 🌬️ In for 4, hold for 4, out for 6. You're safe right now.",
-                "Anxiety is your mind trying to protect you, but sometimes it works too hard. 💜 Let's work through this together with some calming techniques.",
-                "I notice you're feeling anxious. 🤍 Remember that this feeling is temporary. Would you like to try a grounding exercise together?"
-            ],
-            'motivation': [
-                "You are stronger than you think! 💪 Every challenge you face is an opportunity to grow. What's one small step you can take today?",
-                "I believe in you! ✨ Remember, progress isn't always linear, but every step forward counts. You've overcome difficulties before.",
-                "Your desire for motivation shows your inner strength. 🌟 What would make you feel proud of yourself today?"
-            ],
-            'default': [
-                "Thank you for sharing that with me. I'm here to listen and support you. 💙 How can I help you feel better today?",
-                "I hear you, and your feelings matter. Would you like to explore this feeling together? 🤗",
-                "I appreciate you opening up to me. 💜 What would be most helpful for you right now?"
-            ]
-        };
-
-        // Page navigation
-        function showPage(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
+        // Tab click handlers
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const sectionName = tab.getAttribute('data-section');
+                switchTab(sectionName);
             });
+        });
 
-            // Remove active from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
+        // Mood selection functionality
+        document.querySelectorAll('.mood-option').forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                
+                // Get mood data
+                const mood = option.getAttribute('data-mood');
+                const moodLabel = option.querySelector('.mood-label').textContent;
+                
+                // Show confirmation
+                setTimeout(() => {
+                    alert(`Mood "${moodLabel}" recorded! Thank you for sharing.`);
+                    // You can replace this with your own mood tracking logic
+                }, 500);
             });
+        });
 
-            // Show selected page
-            document.getElementById(pageId).classList.add('active');
-
-            // Activate corresponding nav item
-            const navItems = document.querySelectorAll('.nav-item');
-            const pageIndex = ['home', 'chat', 'mood', 'profile'].indexOf(pageId);
-            if (pageIndex !== -1 && navItems[pageIndex]) {
-                navItems[pageIndex].classList.add('active');
-            }
-
-            currentPage = pageId;
-
-            // Initialize page-specific content
-            if (pageId === 'mood') {
-                updateMoodStats();
-                renderMoodEntries();
-            } else if (pageId === 'chat') {
-                // Add initial message if chat is empty
-                const messages = document.getElementById('chatMessages');
-                if (messages.children.length === 1) {
-                    setTimeout(() => {
-                        addMessage("Feel free to share anything that's on your mind. I'm here to listen without judgment. 💫", 'ai');
-                    }, 2000);
-                }
-            }
-        }
+        // Toggle functionality for profile settings
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
 
         // Chat functionality
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            if (message) {
-                addMessage(message, 'user');
-                input.value = '';
-                
-                // Show typing indicator
-                showTypingIndicator();
-                
-                // Send via Socket.IO if connected, otherwise use offline response
-                if (socket && socket.connected) {
-                    socket.emit('message', { message, userId });
-                } else {
-                    // Fallback to offline responses
-                    setTimeout(() => {
-                        generateOfflineResponse(message);
-                    }, 1000 + Math.random() * 2000);
-                }
-            }
-        }
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
 
-        function selectEmotion(emotion) {
-            const emotionMessages = {
-                'happy': "I'm feeling really happy today! 😊",
-                'sad': "I'm feeling quite sad right now. 😢",
-                'anxious': "I'm feeling anxious and need some support. 😰",
-                'motivation': "I could really use some motivation right now. 💪"
-            };
-
-            addMessage(emotionMessages[emotion], 'user');
-            showTypingIndicator();
-            
-            if (socket && socket.connected) {
-                socket.emit('message', { message: emotionMessages[emotion], userId, emotion });
-            } else {
-                setTimeout(() => {
-                    const responseList = offlineResponses[emotion] || offlineResponses['default'];
-                    const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
-                    removeTypingIndicator();
-                    addMessage(randomResponse, 'ai', emotion);
-                }, 1500);
-            }
-        }
-
-        function addMessage(text, sender, emotion = null) {
-            const messagesContainer = document.getElementById('chatMessages');
+        function addMessage(text, isUser = false) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            let messageContent = '';
-            if (emotion && sender === 'ai') {
-                messageContent += `<div class="emotion-tag emotion-${emotion}">${emotion}</div>`;
-            }
-            messageContent += `<div>${text}</div>`;
-            
-            if (sender === 'ai') {
-                messageContent += `
-                    <div class="message-time">
-                        <span class="heart-icon">💜</span>
-                        <span>${timeStr}</span>
-                    </div>
-                `;
-            } else {
-                messageContent += `
-                    <div class="message-time">
-                        <span>${timeStr}</span>
-                    </div>
-                `;
-            }
-            
-            messageDiv.innerHTML = messageContent;
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.textContent = text;
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-            // Auto-save mood if emotional message
-            if (sender === 'user' && emotion) {
-                autoSaveMoodFromEmotion(emotion, text);
-            }
-        }
-
-        function generateOfflineResponse(userMessage) {
-            const lowerMessage = userMessage.toLowerCase();
-            let responseType = 'default';
-            let detectedEmotion = 'neutral';
-            
-            if (lowerMessage.includes('happy') || lowerMessage.includes('good') || lowerMessage.includes('great') || lowerMessage.includes('joy')) {
-                responseType = 'happy';
-                detectedEmotion = 'happy';
-            } else if (lowerMessage.includes('sad') || lowerMessage.includes('down') || lowerMessage.includes('upset') || lowerMessage.includes('cry')) {
-                responseType = 'sad';
-                detectedEmotion = 'sad';
-            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('worried') || lowerMessage.includes('stress') || lowerMessage.includes('nervous')) {
-                responseType = 'anxious';
-                detectedEmotion = 'anxious';
-            } else if (lowerMessage.includes('motivat') || lowerMessage.includes('inspire') || lowerMessage.includes('encourage') || lowerMessage.includes('help')) {
-                responseType = 'motivation';
-                detectedEmotion = 'neutral';
-            }
-            
-            const responseList = offlineResponses[responseType];
-            const randomResponse = responseList[Math.floor(Math.random() * responseList.length)];
-            
-            removeTypingIndicator();
-            addMessage(randomResponse, 'ai', detectedEmotion);
         }
 
         function showTypingIndicator() {
-            removeTypingIndicator();
-            const messagesContainer = document.getElementById('chatMessages');
             const typingDiv = document.createElement('div');
             typingDiv.className = 'typing-indicator';
-            typingDiv.id = 'typingIndicator';
+            typingDiv.id = 'typing-indicator';
             typingDiv.innerHTML = `
-                <div>Empatha is thinking</div>
+                <span class="typing-text">Empatha is thinking</span>
                 <div class="typing-dots">
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
-                    <span class="typing-dot"></span>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
                 </div>
             `;
             messagesContainer.appendChild(typingDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return typingDiv;
         }
 
-        function removeTypingIndicator() {
-            const existing = document.getElementById('typingIndicator');
-            if (existing) existing.remove();
-        }
-
-        // Mood tracker functionality
-        function selectMood(moodType, icon, label, score) {
-            // Update UI
-            document.querySelectorAll('.mood-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            event.target.closest('.mood-option').classList.add('selected');
-            
-            // Save mood entry
-            const moodEntry = {
-                id: Date.now(),
-                type: moodType,
-                icon: icon,
-                label: label,
-                score: score,
-                timestamp: new Date().toISOString(),
-                note: `Feeling ${label.toLowerCase()} today`
+        function generateAIResponse(userMessage) {
+            const responses = {
+                'happy': "I'm so glad to hear you're feeling happy! 😊 Happiness is such a wonderful emotion. What's bringing you joy today?",
+                'sad': "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. 💙 Would you like to talk about what's on your mind?",
+                'anxious': "Feeling anxious can be really challenging. 🫂 Let's take this one step at a time. Would some breathing exercises help, or would you prefer to talk through what's making you feel this way?",
+                'motivation': "I believe in you! 💪 Everyone needs a little motivation sometimes. What goal or challenge are you working on? Let's break it down together.",
+                'default': "Thank you for sharing with me. I'm here to listen and support you. Could you tell me more about how you're feeling right now? 💝"
             };
-            
-            moodEntries.unshift(moodEntry);
-            if (moodEntries.length > 50) moodEntries = moodEntries.slice(0, 50); // Keep last 50 entries
-            
-            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
-            currentMood = { type: moodType, score: score };
-            
-            updateMoodStats();
-            renderMoodEntries();
-            
-            showNotification(`Mood logged: ${label} 💜`);
-        }
 
-        function autoSaveMoodFromEmotion(emotion, message) {
-            const emotionToMood = {
-                'happy': { type: 'happy', icon: '😊', label: 'Happy', score: 7 },
-                'sad': { type: 'sad', icon: '☹️', label: 'Sad', score: 3 },
-                'anxious': { type: 'sad', icon: '😰', label: 'Anxious', score: 4 },
-                'motivation': { type: 'neutral', icon: '😐', label: 'Neutral', score: 5 }
-            };
+            const lowerMessage = userMessage.toLowerCase();
             
-            const moodData = emotionToMood[emotion];
-            if (moodData) {
-                const moodEntry = {
-                    id: Date.now(),
-                    type: moodData.type,
-                    icon: moodData.icon,
-                    label: moodData.label,
-                    score: moodData.score,
-                    timestamp: new Date().toISOString(),
-                    note: message.substring(0, 100) + (message.length > 100 ? '...' : '')
-                };
-                
-                moodEntries.unshift(moodEntry);
-                if (moodEntries.length > 50) moodEntries = moodEntries.slice(0, 50);
-                
-                localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
-                updateMoodStats();
+            if (lowerMessage.includes('happy') || lowerMessage.includes('😊')) {
+                return responses.happy;
+            } else if (lowerMessage.includes('sad') || lowerMessage.includes('😢')) {
+                return responses.sad;
+            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('😰')) {
+                return responses.anxious;
+            } else if (lowerMessage.includes('motivation') || lowerMessage.includes('⚡')) {
+                return responses.motivation;
+            } else {
+                return responses.default;
             }
         }
 
-        function updateMoodStats() {
-            const weekEntries = moodEntries.filter(entry => {
-                const entryDate = new Date(entry.timestamp);
-                const weekAgo = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
-                return entryDate >= weekAgo;
-            });
-            
-            if (weekEntries.length === 0) {
-                document.getElementById('averageScore').textContent = '6/10';
-                document.getElementById('happyDays').textContent = '4';
-                document.getElementById('neutralDays').textContent = '2';
-                document.getElementById('difficultDays').textContent = '1';
-                return;
-            }
-            
-            const averageScore = Math.round(weekEntries.reduce((sum, entry) => sum + entry.score, 0) / weekEntries.length);
-            const happyDays = weekEntries.filter(entry => entry.score >= 7).length;
-            const neutralDays = weekEntries.filter(entry => entry.score >= 4 && entry.score < 7).length;
-            const difficultDays = weekEntries.filter(entry => entry.score < 4).length;
-            
-            document.getElementById('averageScore').textContent = `${averageScore}/10`;
-            document.getElementById('happyDays').textContent = happyDays;
-            document.getElementById('neutralDays').textContent = neutralDays;
-            document.getElementById('difficultDays').textContent = difficultDays;
-        }
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
 
-        function renderMoodEntries() {
-            const container = document.getElementById('moodEntriesList');
-            container.innerHTML = '';
-            
-            const recentEntries = moodEntries.slice(0, 10);
-            
-            if (recentEntries.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; color: #888; padding: 20px;">
-                        No mood entries yet. Select your mood above to get started! 🌟
-                    </div>
-                `;
-                return;
-            }
-            
-            recentEntries.forEach(entry => {
-                const entryDate = new Date(entry.timestamp);
-                const formattedDate = entryDate.toLocaleDateString('en-GB') + ' at ' + entryDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                const entryEl = document.createElement('div');
-                entryEl.className = 'mood-entry';
-                entryEl.innerHTML = `
-                    <div class="entry-mood">${entry.icon}</div>
-                    <div class="entry-details">
-                        <div class="entry-tag ${entry.type}">${entry.label}</div>
-                        <div class="entry-meta">${entry.score}/10 intensity · ${formattedDate}</div>
-                        <div class="entry-note">"${entry.note}"</div>
-                    </div>
-                `;
-                container.appendChild(entryEl);
-            });
-        }
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
 
-        // Profile page functions
-        function showJournalPrompt() {
-            const prompts = [
-                "What are three things you're grateful for today?",
-                "How did you show kindness to yourself or others today?",
-                "What emotions did you experience today, and what triggered them?",
-                "What's one thing you learned about yourself this week?",
-                "How can you practice self-compassion right now?"
-            ];
-            
-            const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
-            showNotification(`📔 Today's Journal Prompt: ${randomPrompt}`);
-        }
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
 
-        function contactSupport() {
-            showNotification("💬 Support team contacted! Someone will reach out within 24 hours. Remember, if this is an emergency, please contact your local emergency services.");
-        }
-
-        function toggleNotifications() {
-            const enabled = localStorage.getItem('notificationsEnabled') !== 'false';
-            localStorage.setItem('notificationsEnabled', (!enabled).toString());
-            showNotification(`🔔 Notifications ${!enabled ? 'enabled' : 'disabled'}!`);
-        }
-
-        function showWellnessGoals() {
-            showNotification("🎯 Wellness goals feature coming soon! Track meditation streaks, mood improvements, and daily check-ins.");
-        }
-
-        function startMeditation() {
-            showNotification("🧘 Starting 5-minute guided meditation... Find a comfortable position and breathe deeply.");
-            // In a real app, this would start a meditation timer/guide
-        }
-
-        // Notification system
-        function showNotification(message) {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #8b5cf6, #a855f7);
-                color: white;
-                padding: 16px 20px;
-                border-radius: 12px;
-                box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-                z-index: 10000;
-                max-width: 300px;
-                font-size: 14px;
-                font-weight: 500;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-            `;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            // Animate in
+            // Generate AI response after delay
             setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 5000);
+                typingIndicator.remove();
+                const aiResponse = generateAIResponse(message);
+                addMessage(aiResponse);
+            }, 1000 + Math.random() * 2000);
         }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set welcome time
-            const welcomeTime = document.getElementById('welcomeTime');
-            if (welcomeTime) {
-                welcomeTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-            
-            // Initialize Socket.IO
-            initializeSocket();
-            
-            // Setup enter key for chat
-            const messageInput = document.getElementById('messageInput');
-            if (messageInput) {
-                messageInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        sendMessage();
-                    }
-                });
-            }
-            
-            // Load saved mood data
-            updateMoodStats();
-            
-            // Show welcome notification
-            setTimeout(() => {
-                showNotification("Welcome to Empatha! 💜 I'm here to support your emotional wellness journey.");
-            }, 2000);
-        });
+        // Event listeners for chat
+        sendBtn.addEventListener('click', sendMessage);
 
-        // Prevent form submission on enter
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.target.tagName !== 'INPUT') {
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                sendMessage();
             }
         });
+
+        // Initialize connection status
+        updateConnectionStatus();
+
+        // Focus on message input when chat tab is clicked
+        document.querySelector('[data-section="chat"]').addEventListener('click', () => {
+            setTimeout(() => {
+                if (messageInput) {
+                    messageInput.focus();
+                }
+            }, 100);
+        });
+
+    
+        
+        const socket = io();
+        
+        socket.on('connect', () => {
+            console.log('Connected to server:', socket.id);
+            document.querySelector('.connection-status').textContent = 'Connected';
+        });
+
+        socket.on('response', (data) => {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            addMessage(data.response, false);
+        });
+
+        socket.on('disconnect', () => {
+            document.querySelector('.connection-status').textContent = 'Disconnected';
+        });
+
+        // To send messages to backend, uncomment and modify sendMessage function:
+        function sendMessageToBackend() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+
+            addMessage(message, true);
+            messageInput.value = '';
+            showTypingIndicator();
+            
+            const userId = 'user123'; // Replace with actual user ID
+            socket.emit('message', { message, userId });
+        }
+        */
+    </script>
+</body>
+</html>
