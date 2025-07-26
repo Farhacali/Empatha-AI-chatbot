@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empatha - AI Elder Care Agent</title>
+    <title>Empatha - AI Wellness Companion</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -14,29 +14,27 @@
         }
 
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #2d2d2d 100%);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
+            --primary-purple: #8b5cf6;
+            --primary-teal: #14b8a6;
+            --dark-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-accent: #4facfe;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --border-radius: 24px;
-            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
-            --shadow-elevated: 0 20px 40px rgba(0, 0, 0, 0.4);
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-radius: 20px;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--dark-gradient);
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
         }
 
         /* Animated Background */
@@ -48,9 +46,9 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 20%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(79, 172, 254, 0.05) 0%, transparent 50%);
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(20, 184, 166, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
             animation: backgroundShift 20s ease-in-out infinite;
             z-index: -1;
         }
@@ -61,447 +59,736 @@
         }
 
         .container {
-            display: flex;
-            height: 100vh;
-            gap: 2px;
-            padding: 12px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 360px;
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 8px;
+            margin: 0 auto 40px;
+            width: fit-content;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 32px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: var(--text-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Home Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            color: var(--text-primary);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-bg);
+            transform: translateY(-2px);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .feature-card {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: var(--border-radius);
-            padding: 24px;
-            overflow-y: auto;
-            box-shadow: var(--shadow-glass);
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
             position: relative;
+            overflow: hidden;
         }
 
-        .sidebar::before {
+        .feature-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 32px;
-            padding: 20px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            color: var(--text-primary);
+        .feature-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-purple);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
             position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        .sidebar-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            50% { left: 100%; }
-            100% { left: 100%; }
-        }
-
-        .conversations-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--primary-gradient);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .sidebar h2 {
-            color: var(--text-primary);
-            font-size: 18px;
+        .feature-title {
+            font-size: 1.3rem;
             font-weight: 600;
-            letter-spacing: -0.5px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
         }
 
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 18px 20px;
-            margin-bottom: 8px;
+        .feature-description {
             color: var(--text-secondary);
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.6;
             position: relative;
-            overflow: hidden;
-            font-weight: 500;
-        }
-
-        .menu-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--glass-bg);
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .menu-item:hover::before {
-            transform: translateX(0);
-        }
-
-        .menu-item:hover {
-            color: var(--text-primary);
-            transform: translateX(8px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .menu-item.active {
-            background: var(--primary-gradient);
-            color: var(--text-primary);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-        }
-
-        .menu-icon {
-            width: 24px;
-            height: 24px;
-            font-size: 20px;
             z-index: 1;
         }
 
-        .menu-text {
-            z-index: 1;
-            font-size: 15px;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: var(--error);
-            color: var(--text-primary);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s infinite;
-            z-index: 2;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-
-        /* Status Panel */
-        .status-panel {
-            margin-top: 24px;
-            padding: 24px;
+        /* Chat Section */
+        .chat-container {
             background: var(--glass-bg);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            color: var(--text-primary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .status-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(118, 75, 162, 0.1));
-            z-index: -1;
-        }
-
-        .status-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 14px;
-            padding: 8px 0;
-        }
-
-        .status-value {
-            color: var(--text-accent);
-            font-weight: 600;
-            padding: 4px 12px;
-            background: rgba(79, 172, 254, 0.2);
-            border-radius: 12px;
-            font-size: 12px;
-        }
-
-        /* Main Chat Area */
-        .chat-area {
-            flex: 1;
+            border-radius: var(--border-radius);
+            height: 600px;
             display: flex;
             flex-direction: column;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-glass);
-            overflow: hidden;
-            position: relative;
+            box-shadow: var(--shadow);
         }
 
         .chat-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 24px 32px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
+            gap: 16px;
+            padding: 24px;
             border-bottom: 1px solid var(--glass-border);
-            position: relative;
-        }
-
-        .chat-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        }
-
-        .chat-title {
-            display: flex;
-            align-items: center;
-            gap: 20px;
         }
 
         .avatar {
-            width: 64px;
-            height: 64px;
-            background: var(--primary-gradient);
-            border-radius: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-primary);
-            font-size: 28px;
             font-weight: 700;
+            font-size: 20px;
             position: relative;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
         }
 
-        .status-indicator {
+        .status-dot {
             position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 20px;
-            height: 20px;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-green);
             border-radius: 50%;
-            border: 3px solid var(--text-primary);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--text-primary);
         }
 
-        .status-indicator.online {
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
-
-        .status-indicator.thinking {
-            background: var(--warning);
-            animation: pulse 1s infinite;
-        }
-
-        .chat-title h1 {
-            color: var(--text-primary);
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -1px;
+        .chat-info h3 {
+            font-size: 1.2rem;
             margin-bottom: 4px;
         }
 
-        .ai-status {
-            font-size: 14px;
+        .chat-status {
             color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            line-height: 1.5;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.ai {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            align-self: flex-start;
+            border-bottom-left-radius: 8px;
+        }
+
+        .message.user {
+            background: var(--card-bg);
+            align-self: flex-end;
+            border-bottom-right-radius: 8px;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-input {
+            padding: 20px 24px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 16px 50px 16px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            border: none;
+            border-radius: 50%;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            padding: 0 24px 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 10px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .quick-btn:hover {
+            background: var(--primary-purple);
+            color: var(--text-primary);
+        }
+
+        /* Mood Tracker Section */
+        .mood-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .mood-section h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .mood-section p {
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .mood-selector {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .mood-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mood-option {
+            flex: 1;
+            min-width: 120px;
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 24px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .mood-option:hover {
+            border-color: var(--primary-purple);
+            transform: translateY(-4px);
+        }
+
+        .mood-option.selected {
+            border-color: var(--primary-teal);
+            background: rgba(20, 184, 166, 0.1);
+        }
+
+        .mood-emoji {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .mood-label {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .stats-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .stats-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .stats-period {
+            background: var(--primary-teal);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
             font-weight: 500;
+        }
+
+        .stats-score {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .score-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-teal);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .score-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .stats-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary-teal);
+        }
+
+        .quick-actions-mood {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .quick-actions-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: pulse 2s infinite;
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            text-decoration: none;
         }
 
-        .header-actions {
+        .action-btn:hover {
+            background: var(--primary-purple);
+            transform: translateX(8px);
+        }
+
+        .mood-history {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .history-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .history-item {
             display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .history-emoji {
+            font-size: 1.5rem;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-mood {
+            background: var(--primary-teal);
+            color: var(--text-primary);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+
+        .history-intensity {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin: 4px 0;
+        }
+
+        .history-date {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .history-note {
+            font-style: italic;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Profile Section */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .profile-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
             gap: 12px;
         }
 
-        .header-btn {
-            width: 48px;
-            height: 48px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .setting-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            backdrop-filter: blur(10px);
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
         }
 
-        .header-btn:hover {
-            background: var(--primary-gradient);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+        .setting-item:last-child {
+            border-bottom: none;
         }
 
-        /* Messages Area */
-        .messages {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            scroll-behavior: smooth;
-        }
-
-        .messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .messages::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
-        }
-
-        .message {
-            max-width: 75%;
-            padding: 20px 24px;
-            border-radius: 24px;
-            font-size: 16px;
-            line-height: 1.6;
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: var(--card-bg);
+            border-radius: 13px;
             position: relative;
-            animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        @keyframes slideIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95);
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1);
-            }
+        .toggle.active {
+            background: var(--primary-teal);
         }
 
-        .message.ai {
-            background: var(--primary-gradient);
-            color: var(--text-primary);
-            align-self: flex-start;
-            margin-right: auto;
-            border-bottom-left-radius: 8px;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-        }
-
-        .message.user {
-            background: var(--glass-bg);
-            color: var(--text-primary);
-            align-self: flex-end;
-            margin-left: auto;
-            border: 1px solid var(--glass-border);
-            border-bottom-right-radius: 8px;
-        }
-
-        .message-tag {
+        .toggle::after {
+            content: '';
             position: absolute;
-            top: -12px;
-            right: 20px;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-primary);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
         }
 
-        .emotion-happy { background: var(--success); }
-        .emotion-sad { background: #3b82f6; }
-        .emotion-worried { background: var(--error); }
-        .emotion-neutral { background: rgba(255, 255, 255, 0.2); }
+        .toggle.active::after {
+            transform: translateX(24px);
+        }
 
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            .nav-tab {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mood-options {
+                flex-direction: column;
+            }
+
+            .mood-option {
+                min-width: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Typing Indicator */
         .typing-indicator {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 20px 24px;
-            background: var(--primary-gradient);
-            border-radius: 24px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-teal));
+            border-radius: 20px;
             border-bottom-left-radius: 8px;
-            color: var(--text-primary);
             max-width: 200px;
-            animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            animation: slideIn 0.3s ease;
         }
 
         .typing-text {
-            font-size: 16px;
-            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-primary);
         }
 
         .typing-dots {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         .typing-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.8);
             animation: typingDots 1.4s infinite ease-in-out;
@@ -521,572 +808,454 @@
                 opacity: 1; 
             }
         }
-
-        /* Message Input Area */
-        .input-container {
-            padding: 20px 32px;
-            border-top: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-        }
-
-        .input-wrapper {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--text-accent);
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
-        }
-
-        .message-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            padding: 16px 20px;
-            font-size: 16px;
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            font-weight: 400;
-            line-height: 1.5;
-        }
-
-        .message-input::placeholder {
-            color: var(--text-secondary);
-            font-weight: 400;
-        }
-
-        .send-btn {
-            width: 48px;
-            height: 48px;
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 50%;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .send-btn:active {
-            transform: scale(0.95);
-        }
-
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .send-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .send-btn:hover .send-icon {
-            transform: translateX(2px);
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            padding: 16px 32px 24px;
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-        }
-
-        .quick-btn {
-            padding: 16px 24px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 32px;
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 14px;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .quick-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--primary-gradient);
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .quick-btn:hover::before {
-            transform: translateY(0);
-        }
-
-        .quick-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(102, 126, 234, 0.3);
-            color: var(--text-primary);
-        }
-
-        .quick-btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .container {
-                padding: 8px;
-                gap: 1px;
-            }
-            
-            .sidebar {
-                width: 300px;
-                padding: 20px;
-            }
-            
-            .chat-header {
-                padding: 20px 24px;
-            }
-            
-            .messages {
-                padding: 24px;
-            }
-            
-            .quick-actions {
-                padding: 20px 24px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                padding: 4px;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                max-height: 200px;
-            }
-            
-            .chat-title h1 {
-                font-size: 24px;
-            }
-            
-            .message {
-                max-width: 90%;
-            }
-            
-            .quick-actions {
-                gap: 12px;
-            }
-            
-            .quick-btn {
-                padding: 12px 20px;
-                font-size: 13px;
-            }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Welcome Message */
-        .welcome-message {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-            font-size: 18px;
-            line-height: 1.6;
-        }
-
-        .welcome-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .welcome-subtitle {
-            font-size: 16px;
-            margin-bottom: 24px;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 32px;
-        }
-
-        .feature-card {
-            padding: 20px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .feature-icon {
-            font-size: 32px;
-            margin-bottom: 12px;
-        }
-
-        .feature-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .feature-description {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="conversations-icon">💬</div>
-                <h2>Empatha Conversations</h2>
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-section="home">
+                <span class="nav-icon">💝</span>
+                <span>Home</span>
             </div>
-            
-            <div class="menu-item active">
-                <div class="menu-icon">💬</div>
-                <span class="menu-text">Active Chat</span>
-                <div class="notification-badge">1</div>
+            <div class="nav-tab" data-section="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
             </div>
-            
-            <div class="menu-item">
-                <div class="menu-icon">📊</div>
-                <span class="menu-text">Health Insights</span>
+            <div class="nav-tab" data-section="mood">
+                <span class="nav-icon">📊</span>
+                <span>Mood Tracker</span>
             </div>
-            
-            <div class="menu-item">
-                <div class="menu-icon">🔔</div>
-                <span class="menu-text">Reminders</span>
+            <div class="nav-tab" data-section="profile">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
             </div>
-            
-            <div class="menu-item">
-                <div class="menu-icon">🚨</div>
-                <span class="menu-text">Emergency</span>
-            </div>
-            
-            <div class="status-panel">
-                <div class="status-title">Health Status</div>
-                <div class="status-item">
-                    <span>Mood</span>
-                    <span class="status-value">Stable</span>
+        </div>
+
+        <!-- Home Section -->
+        <div class="content-section active" id="home">
+            <div class="hero">
+                <h1>Empatha</h1>
+                <p>Your emotionally intelligent AI companion for wellness and care</p>
+                <div class="cta-buttons">
+                    <button class="btn btn-primary" onclick="switchTab('chat')">
+                        <span>💬</span>
+                        Start Chatting with Empatha
+                    </button>
+                    <button class="btn btn-secondary">
+                        <span>📖</span>
+                        Learn More
+                    </button>
                 </div>
-                <div class="status-item">
-                    <span>Reminders</span>
-                    <span class="status-value">3 Active</span>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">💝</span>
+                    <h3 class="feature-title">Emotional Intelligence</h3>
+                    <p class="feature-description">Understands and responds to your emotions with genuine compassion</p>
                 </div>
-                <div class="status-item">
-                    <span>Last Check</span>
-                    <span class="status-value">2h ago</span>
+                <div class="feature-card">
+                    <span class="feature-icon">💬</span>
+                    <h3 class="feature-title">Real-time Support</h3>
+                    <p class="feature-description">24/7 availability for emotional support and wellness guidance</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🛡️</span>
+                    <h3 class="feature-title">Safe & Secure</h3>
+                    <p class="feature-description">Your conversations are private and handled with care</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">✨</span>
+                    <h3 class="feature-title">Personalized Care</h3>
+                    <p class="feature-description">Learns your patterns to provide tailored wellness support</p>
                 </div>
             </div>
         </div>
 
-        <div class="chat-area">
-            <div class="chat-header">
-                <div class="chat-title">
-                    <div class="avatar">E
-                        <div class="status-indicator online"></div>
+        <!-- Chat Section -->
+        <div class="content-section" id="chat">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="avatar">
+                        💝
+                        <div class="status-dot"></div>
                     </div>
-                    <div>
-                        <h1>Empatha</h1>
-                        <div class="ai-status">
-                            <div class="status-dot"></div>
-                            Online & Ready to Help
-                        </div>
+                    <div class="chat-info">
+                        <h3>Empatha</h3>
+                        <div class="chat-status">Always here to listen</div>
                     </div>
                 </div>
-                <div class="header-actions">
-                    <button class="header-btn">⚙️</button>
-                    <button class="header-btn">📞</button>
+                
+                <div class="messages" id="messages">
+                    <div class="message ai">
+                        Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💙
+                    </div>
                 </div>
-            </div>
-            
-            <div class="messages">
-                <div class="welcome-message">
-                    <div class="welcome-title">Welcome to Empatha AI</div>
-                    <div class="welcome-subtitle">Your compassionate AI companion for elder care</div>
-                    <div class="feature-grid">
-                        <div class="feature-card">
-                            <div class="feature-icon">💝</div>
-                            <div class="feature-title">Emotional Support</div>
-                            <div class="feature-description">Empathetic conversations and mental wellness</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">🏥</div>
-                            <div class="feature-title">Health Monitoring</div>
-                            <div class="feature-description">Track vitals and medication reminders</div>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">🆘</div>
-                            <div class="feature-title">Emergency Care</div>
-                            <div class="feature-description">24/7 emergency response system</div>
-                        </div>
+                
+                <div class="quick-actions">
+                    <button class="quick-btn" data-message="😊 Happy">😊 Happy</button>
+                    <button class="quick-btn" data-message="😢 Sad">😢 Sad</button>
+                    <button class="quick-btn" data-message="😰 Anxious">😰 Anxious</button>
+                    <button class="quick-btn" data-message="⚡ Need motivation">⚡ Need motivation</button>
+                </div>
+                
+                <div class="chat-input">
+                    <div class="input-wrapper">
+                        <input type="text" class="message-input" placeholder="Share how you're feeling..." id="messageInput">
+                        <button class="send-btn" id="sendBtn">➤</button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Message Input Area -->
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <input type="text" id="messageInput" class="message-input" placeholder="Type your message here..." autocomplete="off">
-                    <button class="send-btn" id="sendBtn">
-                        <span class="send-icon">📤</span>
-                    </button>
+        </div>
+
+        <!-- Mood Tracker Section -->
+        <div class="content-section" id="mood">
+            <div class="mood-section">
+                <h2>Mood Tracker</h2>
+                <p>Track your emotional journey and discover patterns in your wellness</p>
+            </div>
+
+            <div class="mood-selector">
+                <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                    💝 How are you feeling right now?
+                </h3>
+                <div class="mood-options">
+                    <div class="mood-option" data-mood="very-happy">
+                        <span class="mood-emoji">☀️</span>
+                        <div class="mood-label">Very Happy</div>
+                    </div>
+                    <div class="mood-option" data-mood="happy">
+                        <span class="mood-emoji">😊</span>
+                        <div class="mood-label">Happy</div>
+                    </div>
+                    <div class="mood-option" data-mood="neutral">
+                        <span class="mood-emoji">😐</span>
+                        <div class="mood-label">Neutral</div>
+                    </div>
+                    <div class="mood-option" data-mood="sad">
+                        <span class="mood-emoji">😢</span>
+                        <div class="mood-label">Sad</div>
+                    </div>
+                    <div class="mood-option" data-mood="very-sad">
+                        <span class="mood-emoji">⚡</span>
+                        <div class="mood-label">Very Sad</div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="quick-actions">
-                <button class="quick-btn" data-message="💊 Check my medications">
-                    <span>💊 Check my medications</span>
-                </button>
-                <button class="quick-btn" data-message="🔔 Set a reminder">
-                    <span>🔔 Set a reminder</span>
-                </button>
-                <button class="quick-btn" data-message="📞 Call for help">
-                    <span>📞 Call for help</span>
-                </button>
-                <button class="quick-btn" data-message="😊 Tell me a joke">
-                    <span>😊 Tell me a joke</span>
-                </button>
-                <button class="quick-btn" data-message="🌤️ How's the weather?">
-                    <span>🌤️ How's the weather?</span>
-                </button>
+
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <h3 class="stats-title">📈 This Week</h3>
+                        <div class="stats-period">Weekly</div>
+                    </div>
+                    <div class="stats-score">
+                        <span class="score-number">6/10</span>
+                        <div class="score-label">Average mood score</div>
+                    </div>
+                    <div class="stats-breakdown">
+                        <div class="stat-item">
+                            <span class="stat-label">Happy days</span>
+                            <span class="stat-value">4</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Neutral days</span>
+                            <span class="stat-value">2</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Difficult days</span>
+                            <span class="stat-value">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions-mood">
+                    <h3 class="quick-actions-title">
+                        📋 Quick Actions
+                    </h3>
+                    <a href="#" class="action-btn">
+                        <span>🧘</span>
+                        <span>Guided meditation</span>
+                    </a>
+                    <a href="#" class="action-btn">
+                        <span>📝</span>
+                        <span>Journal prompt</span>
+                    </a>
+                    <a href="#" class="action-btn">
+                        <span>📞</span>
+                        <span>Contact support</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mood-history">
+                <h3 class="history-title">Recent Mood Entries</h3>
+                <div class="history-item">
+                    <span class="history-emoji">😊</span>
+                    <div class="history-info">
+                        <div class="history-mood">happy</div>
+                        <div class="history-intensity">8/10 intensity</div>
+                        <div class="history-date">26/7/2025 at 08:38 pm</div>
+                        <div class="history-note">"Had a great conversation with my family"</div>
+                    </div>
+                </div>
+                <div class="history-item">
+                    <span class="history-emoji">😐</span>
+                    <div class="history-info">
+                        <div class="history-mood">neutral</div>
+                        <div class="history-intensity">6/10 intensity</div>
+                        <div class="history-date">25/7/2025 at 10:38 pm</div>
+                        <div class="history-note">"Feeling okay, just a regular day"</div>
+                    </div>
+                </div>
+                <div class="history-item">
+                    <span class="history-emoji">😢</span>
+                    <div class="history-info">
+                        <div class="history-mood">sad</div>
+                        <div class="history-intensity">4/10 intensity</div>
+                        <div class="history-date">24/7/2025 at 10:38 pm</div>
+                        <div class="history-note">"Missing my old friends today"</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="content-section" id="profile">
+            <div class="profile-grid">
+                <div class="profile-card">
+                    <h3>👤 Personal Information</h3>
+                    <div class="setting-item">
+                        <span>Name</span>
+                        <span style="color: var(--primary-teal);">User</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Joined</span>
+                        <span style="color: var(--text-secondary);">July 2025</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Sessions</span>
+                        <span style="color: var(--primary-teal);">24</span>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h3>🔔 Notifications</h3>
+                    <div class="setting-item">
+                        <span>Daily Check-ins</span>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Mood Reminders</span>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Weekly Reports</span>
+                        <div class="toggle"></div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h3>🎨 Preferences</h3>
+                    <div class="setting-item">
+                        <span>Dark Mode</span>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Sound Effects</span>
+                        <div class="toggle"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Animation</span>
+                        <div class="toggle active"></div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h3>🛡️ Privacy & Security</h3>
+                    <div class="setting-item">
+                        <span>Data Encryption</span>
+                        <span style="color: var(--accent-green);">Enabled</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Anonymous Mode</span>
+                        <div class="toggle"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Data Export</span>
+                        <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px;">Export</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Enhanced interactive functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const messagesContainer = document.querySelector('.messages');
-            const messageInput = document.getElementById('messageInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const quickBtns = document.querySelectorAll('.quick-btn');
-            const menuItems = document.querySelectorAll('.menu-item');
+        // Tab switching functionality
+        function switchTab(sectionName) {
+            // Remove active class from all tabs and sections
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
             
-            // Remove welcome message initially
-            let welcomeRemoved = false;
-            
-            function removeWelcomeMessage() {
-                if (!welcomeRemoved) {
-                    const welcomeMessage = document.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.remove();
-                        welcomeRemoved = true;
-                    }
-                }
-            }
-            
-            // Add message function
-            function addMessage(text, isUser = false, emotion = null) {
-                removeWelcomeMessage();
+            // Add active class to selected tab and section
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+            document.getElementById(sectionName).classList.add('active');
+        }
+
+        // Tab click handlers
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const sectionName = tab.getAttribute('data-section');
+                switchTab(sectionName);
+            });
+        });
+
+        // Mood selection functionality
+        document.querySelectorAll('.mood-option').forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                option.classList.add('selected');
                 
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
-                messageDiv.textContent = text;
+                // Get mood data
+                const mood = option.getAttribute('data-mood');
+                const moodLabel = option.querySelector('.mood-label').textContent;
                 
-                if (emotion && !isUser) {
-                    const tagDiv = document.createElement('div');
-                    tagDiv.className = `message-tag emotion-${emotion}`;
-                    tagDiv.textContent = emotion;
-                    messageDiv.appendChild(tagDiv);
-                }
-                
-                messagesContainer.appendChild(messageDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                
-                return messageDiv;
-            }
-            
-            // Show typing indicator
-            function showTypingIndicator() {
-                const typingDiv = document.createElement('div');
-                typingDiv.className = 'typing-indicator';
-                typingDiv.innerHTML = `
-                    <span class="typing-text">Empatha is thinking</span>
-                    <div class="typing-dots">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                `;
-                messagesContainer.appendChild(typingDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                return typingDiv;
-            }
-            
-            // AI Response generator
-            function generateAIResponse(userMessage) {
-                const responses = {
-                    'medications': {
-                        text: "I can help you with your medications! You have 3 medications scheduled for today: \n\n• Blood pressure medication at 9:00 AM ✅\n• Vitamin D supplement at 2:00 PM (due soon)\n• Heart medication at 8:00 PM\n\nWould you like me to set a reminder for your next dose?",
-                        emotion: 'helpful'
-                    },
-                    'reminder': {
-                        text: "I'd be happy to set a reminder for you! What would you like to be reminded about and when?",
-                        emotion: 'helpful'
-                    },
-                    'help': {
-                        text: "I'm here to help! I can assist with medication reminders, health monitoring, emergency contacts, or just have a friendly conversation. Is there something specific you need help with right now?",
-                        emotion: 'caring'
-                    },
-                    'joke': {
-                        text: "Here's a gentle joke for you: Why don't scientists trust atoms? Because they make up everything! 😄 I hope that brought a smile to your face!",
-                        emotion: 'happy'
-                    },
-                    'weather': {
-                        text: "The weather today is partly cloudy with a temperature of 72°F. Perfect for a nice walk if you're feeling up to it! Remember to stay hydrated and take your time.",
-                        emotion: 'informative'
-                    },
-                    'default': {
-                        text: "I understand you're reaching out to me. I'm here to listen and help however I can. Could you tell me more about what's on your mind?",
-                        emotion: 'caring'
-                    }
-                };
-                
-                const lowerMessage = userMessage.toLowerCase();
-                
-                if (lowerMessage.includes('medication') || lowerMessage.includes('medicine') || lowerMessage.includes('pill')) {
-                    return responses.medications;
-                } else if (lowerMessage.includes('reminder') || lowerMessage.includes('remind')) {
-                    return responses.reminder;
-                } else if (lowerMessage.includes('help') || lowerMessage.includes('emergency')) {
-                    return responses.help;
-                } else if (lowerMessage.includes('joke') || lowerMessage.includes('funny')) {
-                    return responses.joke;
-                } else if (lowerMessage.includes('weather') || lowerMessage.includes('temperature')) {
-                    return responses.weather;
-                } else {
-                    return responses.default;
-                }
-            }
-            
-            // Send message function
-            function sendMessage() {
-                const message = messageInput.value.trim();
-                if (message === '') return;
-                
-                // Add user message
-                addMessage(message, true);
-                messageInput.value = '';
-                
-                // Show typing indicator
-                const typingIndicator = showTypingIndicator();
-                
-                // Generate AI response after delay
+                // Show confirmation (you can replace this with your own logic)
                 setTimeout(() => {
-                    typingIndicator.remove();
-                    const aiResponse = generateAIResponse(message);
-                    addMessage(aiResponse.text, false, aiResponse.emotion);
-                }, 1000 + Math.random() * 2000); // 1-3 seconds delay
+                    alert(`Mood "${moodLabel}" recorded! Thank you for sharing.`);
+                }, 500);
+            });
+        });
+
+        // Toggle functionality for profile settings
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+
+        // Chat functionality
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const quickBtns = document.querySelectorAll('.quick-btn');
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span class="typing-text">Empatha is thinking</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return typingDiv;
+        }
+
+        function generateAIResponse(userMessage) {
+            const responses = {
+                'happy': "I'm so glad to hear you're feeling happy! 😊 Happiness is such a wonderful emotion. What's bringing you joy today?",
+                'sad': "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. 💙 Would you like to talk about what's on your mind?",
+                'anxious': "Feeling anxious can be really challenging. 🫂 Let's take this one step at a time. Would some breathing exercises help, or would you prefer to talk through what's making you feel this way?",
+                'motivation': "I believe in you! 💪 Everyone needs a little motivation sometimes. What goal or challenge are you working on? Let's break it down together.",
+                'default': "Thank you for sharing with me. I'm here to listen and support you. Could you tell me more about how you're feeling right now? 💝"
+            };
+
+            const lowerMessage = userMessage.toLowerCase();
+            
+            if (lowerMessage.includes('happy') || lowerMessage.includes('😊')) {
+                return responses.happy;
+            } else if (lowerMessage.includes('sad') || lowerMessage.includes('😢')) {
+                return responses.sad;
+            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('😰')) {
+                return responses.anxious;
+            } else if (lowerMessage.includes('motivation') || lowerMessage.includes('⚡')) {
+                return responses.motivation;
+            } else {
+                return responses.default;
             }
-            
-            // Event listeners
-            sendBtn.addEventListener('click', sendMessage);
-            
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
+
+            // Generate AI response after delay
+            setTimeout(() => {
+                typingIndicator.remove();
+                const aiResponse = generateAIResponse(message);
+                addMessage(aiResponse);
+            }, 1000 + Math.random() * 2000);
+        }
+
+        // Event listeners for chat
+        sendBtn.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Quick action buttons
+        quickBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const message = btn.getAttribute('data-message');
+                if (message) {
+                    messageInput.value = message;
                     sendMessage();
                 }
             });
-            
-            // Enable input when typing
-            messageInput.addEventListener('input', function() {
-                sendBtn.disabled = this.value.trim() === '';
+        });
+
+        // Action buttons in mood tracker
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const actionText = btn.querySelector('span:last-child').textContent;
+                
+                if (actionText.includes('meditation')) {
+                    addMessage("Starting a 5-minute guided meditation session... 🧘‍♀️", false);
+                    switchTab('chat');
+                } else if (actionText.includes('Journal')) {
+                    addMessage("Here's a journal prompt: What are three things you're grateful for today? Take a moment to reflect on them. ✨", false);
+                    switchTab('chat');
+                } else if (actionText.includes('support')) {
+                    addMessage("I'm here to support you! You can also reach out to professional support if needed. How can I help you right now? 💝", false);
+                    switchTab('chat');
+                }
             });
-            
-            // Quick action buttons
-            quickBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const message = this.getAttribute('data-message');
-                    if (message) {
-                        messageInput.value = message;
-                        sendMessage();
-                    }
-                    
-                    // Animation feedback
-                    this.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 150);
-                });
-            });
-            
-            // Menu item interactions
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    menuItems.forEach(mi => mi.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Simulate different views
-                    const menuText = this.querySelector('.menu-text').textContent;
-                    removeWelcomeMessage();
-                    
-                    if (menuText === 'Health Insights') {
-                        addMessage("Here's your health summary for today: Heart rate: 72 bpm, Blood pressure: 120/80, Steps: 3,245. Everything looks good!", false, 'informative');
-                    } else if (menuText === 'Reminders') {
-                        addMessage("You have 3 active reminders: Take vitamin D at 2:00 PM, Doctor appointment tomorrow at 10:00 AM, and call family tonight.", false, 'helpful');
-                    } else if (menuText === 'Emergency') {
-                        addMessage("Emergency contacts are ready. If you need immediate help, I can connect you with emergency services or your designated contacts. Are you okay?", false, 'urgent');
-                    }
-                });
-            });
-            
-            // Initial greeting after a short delay
+        });
+
+        // Initialize with focus on message input when chat is active
+        document.querySelector('[data-section="chat"]').addEventListener('click', () => {
             setTimeout(() => {
-                removeWelcomeMessage();
-                addMessage("Hello! I'm Empatha, your AI companion. I'm here to help you with your health, medications, reminders, or just to chat. How are you feeling today?", false, 'caring');
-            }, 2000);
-            
-            // Focus on input
-            messageInput.focus();
+                messageInput.focus();
+            }, 100);
         });
     </script>
 </body>
