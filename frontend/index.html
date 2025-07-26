@@ -67,6 +67,10 @@
             font-size: 14px;
         }
 
+        .connection-status.connected {
+            color: #10b981;
+        }
+
         /* Navigation */
         .nav-container {
             display: flex;
@@ -333,6 +337,43 @@
             background: rgba(255, 255, 255, 0.1);
             align-self: flex-end;
             border-bottom-right-radius: 8px;
+        }
+
+        .message-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            margin-top: 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .emotion-happy { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .emotion-sad { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .emotion-anxious { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .emotion-neutral { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+
+        .actions-container {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .action-item {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .action-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .action-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
         }
 
         @keyframes slideIn {
@@ -639,7 +680,7 @@
     <!-- Header -->
     <div class="header">
         <div class="logo-section">
-            <div class="logo">💝</div>
+            <div class="logo">💜</div>
             <div class="logo-text">
                 <div class="logo-title">Empatha</div>
                 <div class="logo-subtitle">Always here to listen</div>
@@ -680,7 +721,7 @@
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon purple">💝</div>
+                    <div class="feature-icon purple"></💜div>
                     <h3 class="feature-title">Emotional Intelligence</h3>
                     <p class="feature-description">Understands and responds to your emotions with genuine compassion</p>
                 </div>
@@ -727,7 +768,7 @@
                 
                 <div class="messages" id="messages">
                     <div class="message ai">
-                        Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💙
+                        Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💜
                     </div>
                 </div>
                 
@@ -834,29 +875,27 @@
     </div>
 
     <script>
+        // Socket.io connection
+        const socket = io();
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9); // Generate random user ID
+
+        // DOM elements
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const connectionStatus = document.querySelector('.connection-status');
+
         // Tab switching functionality
         function switchTab(sectionName) {
-            // Remove active class from all tabs and sections
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
             
-            // Add active class to selected tab and section
             document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
             document.getElementById(sectionName).classList.add('active');
 
-            // Update connection status
-            updateConnectionStatus();
-        }
-
-        // Update connection status
-        function updateConnectionStatus() {
-            const statusEl = document.querySelector('.connection-status');
-            const activeTab = document.querySelector('.nav-tab.active').getAttribute('data-section');
-            
-            if (activeTab === 'chat') {
-                statusEl.textContent = 'Connected';
-            } else {
-                statusEl.textContent = 'Ready';
+            // Focus on message input when chat tab is selected
+            if (sectionName === 'chat') {
+                setTimeout(() => messageInput.focus(), 100);
             }
         }
 
@@ -866,6 +905,120 @@
                 const sectionName = tab.getAttribute('data-section');
                 switchTab(sectionName);
             });
+        });
+
+        // Socket.io event handlers
+        socket.on('connect', () => {
+            console.log('✅ Connected to server:', socket.id);
+            connectionStatus.textContent = 'Connected';
+            connectionStatus.classList.add('connected');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Disconnected from server');
+            connectionStatus.textContent = 'Disconnected';
+            connectionStatus.classList.remove('connected');
+        });
+
+        socket.on('response', (data) => {
+            removeTypingIndicator();
+            addMessage(data.response, false, data.emotion, data.actions);
+        });
+
+        socket.on('reminder', (data) => {
+            // You could show this as a notification instead of alert
+            alert(`🔔 Reminder: ${data.message}`);
+        });
+
+        socket.on('error', (err) => {
+            removeTypingIndicator();
+            addMessage('Something went wrong. Please try again.', false);
+            console.error('Socket error:', err);
+        });
+
+        // Chat functionality
+        function addMessage(text, isUser = false, emotion = null, actions = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const textDiv = document.createElement('div');
+            textDiv.textContent = text;
+            messageDiv.appendChild(textDiv);
+
+            // Add emotion tag if present
+            if (emotion) {
+                const emotionTag = document.createElement('span');
+                emotionTag.className = `message-tag emotion-${emotion}`;
+                emotionTag.textContent = emotion;
+                messageDiv.appendChild(emotionTag);
+            }
+
+            // Add actions if present (for AI messages)
+            if (!isUser && actions && actions.length > 0) {
+                const actionsContainer = document.createElement('div');
+                actionsContainer.className = 'actions-container';
+                
+                actions.forEach(action => {
+                    const actionItem = document.createElement('div');
+                    actionItem.className = `action-item ${action.success ? 'action-success' : 'action-error'}`;
+                    actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error})`}`;
+                    actionsContainer.appendChild(actionItem);
+                });
+                
+                messageDiv.appendChild(actionsContainer);
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            removeTypingIndicator();
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span class="typing-text">Empatha is thinking</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '') return;
+
+            // Add user message to chat
+            addMessage(message, true);
+            messageInput.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Send message to server via socket
+            socket.emit('message', { message, userId });
+        }
+
+        // Event listeners for chat
+        sendBtn.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
         });
 
         // Mood selection functionality
@@ -880,10 +1033,12 @@
                 const mood = option.getAttribute('data-mood');
                 const moodLabel = option.querySelector('.mood-label').textContent;
                 
+                // Send mood data to server (you can implement this)
+                socket.emit('mood_update', { mood, userId });
+                
                 // Show confirmation
                 setTimeout(() => {
                     alert(`Mood "${moodLabel}" recorded! Thank you for sharing.`);
-                    // You can replace this with your own mood tracking logic
                 }, 500);
             });
         });
@@ -892,138 +1047,19 @@
         document.querySelectorAll('.toggle').forEach(toggle => {
             toggle.addEventListener('click', () => {
                 toggle.classList.toggle('active');
+                // You can emit setting changes to server here
+                // socket.emit('settings_update', { setting: 'name', value: toggle.classList.contains('active') });
             });
         });
 
-        // Chat functionality
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-
-        function addMessage(text, isUser = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
-            messageDiv.textContent = text;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        function showTypingIndicator() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = `
-                <span class="typing-text">Empatha is thinking</span>
-                <div class="typing-dots">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            `;
-            messagesContainer.appendChild(typingDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            return typingDiv;
-        }
-
-        function generateAIResponse(userMessage) {
-            const responses = {
-                'happy': "I'm so glad to hear you're feeling happy! 😊 Happiness is such a wonderful emotion. What's bringing you joy today?",
-                'sad': "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. 💙 Would you like to talk about what's on your mind?",
-                'anxious': "Feeling anxious can be really challenging. 🫂 Let's take this one step at a time. Would some breathing exercises help, or would you prefer to talk through what's making you feel this way?",
-                'motivation': "I believe in you! 💪 Everyone needs a little motivation sometimes. What goal or challenge are you working on? Let's break it down together.",
-                'default': "Thank you for sharing with me. I'm here to listen and support you. Could you tell me more about how you're feeling right now? 💝"
-            };
-
-            const lowerMessage = userMessage.toLowerCase();
-            
-            if (lowerMessage.includes('happy') || lowerMessage.includes('😊')) {
-                return responses.happy;
-            } else if (lowerMessage.includes('sad') || lowerMessage.includes('😢')) {
-                return responses.sad;
-            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('😰')) {
-                return responses.anxious;
-            } else if (lowerMessage.includes('motivation') || lowerMessage.includes('⚡')) {
-                return responses.motivation;
-            } else {
-                return responses.default;
-            }
-        }
-
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (message === '') return;
-
-            // Add user message
-            addMessage(message, true);
-            messageInput.value = '';
-
-            // Show typing indicator
-            const typingIndicator = showTypingIndicator();
-
-            // Generate AI response after delay
-            setTimeout(() => {
-                typingIndicator.remove();
-                const aiResponse = generateAIResponse(message);
-                addMessage(aiResponse);
-            }, 1000 + Math.random() * 2000);
-        }
-
-        // Event listeners for chat
-        sendBtn.addEventListener('click', sendMessage);
-
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Focus on message input when page loads if chat is active
+            const activeChatTab = document.querySelector('.nav-tab.active[data-section="chat"]');
+            if (activeChatTab) {
+                messageInput.focus();
             }
         });
-
-        // Initialize connection status
-        updateConnectionStatus();
-
-        // Focus on message input when chat tab is clicked
-        document.querySelector('[data-section="chat"]').addEventListener('click', () => {
-            setTimeout(() => {
-                if (messageInput) {
-                    messageInput.focus();
-                }
-            }, 100);
-        });
-
-    
-        
-        const socket = io();
-        
-        socket.on('connect', () => {
-            console.log('Connected to server:', socket.id);
-            document.querySelector('.connection-status').textContent = 'Connected';
-        });
-
-        socket.on('response', (data) => {
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) {
-                typingIndicator.remove();
-            }
-            addMessage(data.response, false);
-        });
-
-        socket.on('disconnect', () => {
-            document.querySelector('.connection-status').textContent = 'Disconnected';
-        });
-
-        // To send messages to backend, uncomment and modify sendMessage function:
-        function sendMessageToBackend() {
-            const message = messageInput.value.trim();
-            if (message === '') return;
-
-            addMessage(message, true);
-            messageInput.value = '';
-            showTypingIndicator();
-            
-            const userId = 'user123'; // Replace with actual user ID
-            socket.emit('message', { message, userId });
-        }
-        */
     </script>
 </body>
 </html>
