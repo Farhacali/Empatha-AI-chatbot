@@ -65,10 +65,15 @@
         .connection-status {
             color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
+            transition: color 0.3s ease;
         }
 
         .connection-status.connected {
             color: #10b981;
+        }
+
+        .connection-status.disconnected {
+            color: #ef4444;
         }
 
         /* Navigation */
@@ -300,6 +305,10 @@
             border: 2px solid #1a1a1a;
         }
 
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
         .chat-info h3 {
             font-size: 18px;
             margin-bottom: 4px;
@@ -350,8 +359,9 @@
 
         .emotion-happy { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
         .emotion-sad { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-        .emotion-anxious { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .emotion-caring { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
         .emotion-neutral { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+        .emotion-concerned { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 
         .actions-container {
             margin-top: 8px;
@@ -436,6 +446,11 @@
             transform: translateY(-50%) scale(1.1);
         }
 
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Mood Tracker Section */
         .mood-tracker {
             text-align: center;
@@ -510,6 +525,31 @@
         .mood-label {
             font-weight: 600;
             font-size: 16px;
+        }
+
+        .mood-history {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .mood-history h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mood-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mood-entry:last-child {
+            border-bottom: none;
         }
 
         /* Profile Section */
@@ -680,7 +720,7 @@
     <!-- Header -->
     <div class="header">
         <div class="logo-section">
-            <div class="logo">💜</div>
+            <div class="logo">💝</div>
             <div class="logo-text">
                 <div class="logo-title">Empatha</div>
                 <div class="logo-subtitle">Always here to listen</div>
@@ -721,7 +761,7 @@
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon purple"></💜div>
+                    <div class="feature-icon purple">💝</div>
                     <h3 class="feature-title">Emotional Intelligence</h3>
                     <p class="feature-description">Understands and responds to your emotions with genuine compassion</p>
                 </div>
@@ -758,18 +798,16 @@
                 <div class="chat-header">
                     <div class="chat-avatar">
                         💝
-                        <div class="status-dot"></div>
+                        <div class="status-dot" id="statusDot"></div>
                     </div>
                     <div class="chat-info">
                         <h3>Empatha</h3>
-                        <div class="chat-status">Always here to listen</div>
+                        <div class="chat-status" id="chatStatus">Connecting...</div>
                     </div>
                 </div>
                 
                 <div class="messages" id="messages">
-                    <div class="message ai">
-                        Hello! I'm Empatha, your emotional wellness companion. How are you feeling today? 💜
-                    </div>
+                    <!-- Messages will be added here dynamically -->
                 </div>
                 
                 <div class="chat-input">
@@ -816,6 +854,24 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mood-history">
+                    <h3>Recent Mood Entries</h3>
+                    <div id="moodEntries">
+                        <div class="mood-entry">
+                            <span>😊 Happy</span>
+                            <span style="color: rgba(255, 255, 255, 0.7);">2 hours ago</span>
+                        </div>
+                        <div class="mood-entry">
+                            <span>😐 Neutral</span>
+                            <span style="color: rgba(255, 255, 255, 0.7);">Yesterday</span>
+                        </div>
+                        <div class="mood-entry">
+                            <span>☀️ Very Happy</span>
+                            <span style="color: rgba(255, 255, 255, 0.7);">2 days ago</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -839,7 +895,7 @@
                     </div>
                     <div class="setting-item">
                         <span>Sessions</span>
-                        <span style="color: #14b8a6;">24</span>
+                        <span style="color: #14b8a6;" id="sessionCount">0</span>
                     </div>
                 </div>
 
@@ -847,15 +903,15 @@
                     <h3>🔔 Notifications</h3>
                     <div class="setting-item">
                         <span>Daily Check-ins</span>
-                        <div class="toggle active"></div>
+                        <div class="toggle active" data-setting="daily-checkins"></div>
                     </div>
                     <div class="setting-item">
                         <span>Mood Reminders</span>
-                        <div class="toggle active"></div>
+                        <div class="toggle active" data-setting="mood-reminders"></div>
                     </div>
                     <div class="setting-item">
                         <span>Weekly Reports</span>
-                        <div class="toggle"></div>
+                        <div class="toggle" data-setting="weekly-reports"></div>
                     </div>
                 </div>
 
@@ -867,7 +923,11 @@
                     </div>
                     <div class="setting-item">
                         <span>Anonymous Mode</span>
-                        <div class="toggle"></div>
+                        <div class="toggle" data-setting="anonymous-mode"></div>
+                    </div>
+                    <div class="setting-item">
+                        <span>Chat History</span>
+                        <span style="color: #14b8a6;" id="chatHistory">Private</span>
                     </div>
                 </div>
             </div>
@@ -877,13 +937,23 @@
     <script>
         // Socket.io connection
         const socket = io();
-        const userId = 'user_' + Math.random().toString(36).substr(2, 9); // Generate random user ID
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
 
         // DOM elements
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const connectionStatus = document.querySelector('.connection-status');
+        const statusDot = document.getElementById('statusDot');
+        const chatStatus = document.getElementById('chatStatus');
+
+        // App state
+        let isConnected = false;
+        let sessionCount = parseInt(localStorage.getItem('sessionCount') || '0');
+        let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
+
+        // Update session count display
+        document.getElementById('sessionCount').textContent = sessionCount;
 
         // Tab switching functionality
         function switchTab(sectionName) {
@@ -910,30 +980,40 @@
         // Socket.io event handlers
         socket.on('connect', () => {
             console.log('✅ Connected to server:', socket.id);
+            isConnected = true;
             connectionStatus.textContent = 'Connected';
             connectionStatus.classList.add('connected');
+            connectionStatus.classList.remove('disconnected');
+            chatStatus.textContent = 'Online and ready to help';
+            statusDot.classList.remove('disconnected');
+            
+            // Increment session count
+            sessionCount++;
+            localStorage.setItem('sessionCount', sessionCount.toString());
+            document.getElementById('sessionCount').textContent = sessionCount;
         });
 
         socket.on('disconnect', () => {
             console.log('❌ Disconnected from server');
+            isConnected = false;
             connectionStatus.textContent = 'Disconnected';
+            connectionStatus.classList.add('disconnected');
             connectionStatus.classList.remove('connected');
+            chatStatus.textContent = 'Reconnecting...';
+            statusDot.classList.add('disconnected');
         });
 
         socket.on('response', (data) => {
             removeTypingIndicator();
             addMessage(data.response, false, data.emotion, data.actions);
-        });
-
-        socket.on('reminder', (data) => {
-            // You could show this as a notification instead of alert
-            alert(`🔔 Reminder: ${data.message}`);
+            sendBtn.disabled = false;
         });
 
         socket.on('error', (err) => {
             removeTypingIndicator();
-            addMessage('Something went wrong. Please try again.', false);
+            addMessage('Sorry, I encountered an issue. Please try again.', false);
             console.error('Socket error:', err);
+            sendBtn.disabled = false;
         });
 
         // Chat functionality
@@ -946,7 +1026,7 @@
             messageDiv.appendChild(textDiv);
 
             // Add emotion tag if present
-            if (emotion) {
+            if (emotion && !isUser) {
                 const emotionTag = document.createElement('span');
                 emotionTag.className = `message-tag emotion-${emotion}`;
                 emotionTag.textContent = emotion;
@@ -961,7 +1041,7 @@
                 actions.forEach(action => {
                     const actionItem = document.createElement('div');
                     actionItem.className = `action-item ${action.success ? 'action-success' : 'action-error'}`;
-                    actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error})`}`;
+                    actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error || 'Failed'})`}`;
                     actionsContainer.appendChild(actionItem);
                 });
                 
@@ -998,13 +1078,14 @@
 
         function sendMessage() {
             const message = messageInput.value.trim();
-            if (message === '') return;
+            if (message === '' || !isConnected) return;
 
             // Add user message to chat
             addMessage(message, true);
             messageInput.value = '';
 
-            // Show typing indicator
+            // Disable send button and show typing indicator
+            sendBtn.disabled = true;
             showTypingIndicator();
 
             // Send message to server via socket
@@ -1022,6 +1103,69 @@
         });
 
         // Mood selection functionality
+        function addMoodEntry(mood, label) {
+            const now = new Date();
+            const entry = {
+                mood,
+                label,
+                timestamp: now.toISOString(),
+                displayTime: formatTimeAgo(now)
+            };
+            
+            moodEntries.unshift(entry); // Add to beginning
+            moodEntries = moodEntries.slice(0, 10); // Keep only last 10 entries
+            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
+            
+            updateMoodHistory();
+        }
+
+        function updateMoodHistory() {
+            const moodEntriesContainer = document.getElementById('moodEntries');
+            moodEntriesContainer.innerHTML = '';
+            
+            if (moodEntries.length === 0) {
+                moodEntriesContainer.innerHTML = '<div class="mood-entry"><span>No mood entries yet</span><span>Track your mood above</span></div>';
+                return;
+            }
+            
+            moodEntries.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'mood-entry';
+                
+                const moodEmoji = getMoodEmoji(entry.mood);
+                entryDiv.innerHTML = `
+                    <span>${moodEmoji} ${entry.label}</span>
+                    <span style="color: rgba(255, 255, 255, 0.7);">${formatTimeAgo(new Date(entry.timestamp))}</span>
+                `;
+                
+                moodEntriesContainer.appendChild(entryDiv);
+            });
+        }
+
+        function getMoodEmoji(mood) {
+            const emojiMap = {
+                'very-happy': '☀️',
+                'happy': '😊',
+                'neutral': '😐',
+                'sad': '😢',
+                'very-sad': '⚡'
+            };
+            return emojiMap[mood] || '😐';
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 60) return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
+            if (diffHours < 24) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+            if (diffDays < 7) return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+            return date.toLocaleDateString();
+        }
+
         document.querySelectorAll('.mood-option').forEach(option => {
             option.addEventListener('click', () => {
                 // Remove selected class from all options
@@ -1033,33 +1177,134 @@
                 const mood = option.getAttribute('data-mood');
                 const moodLabel = option.querySelector('.mood-label').textContent;
                 
-                // Send mood data to server (you can implement this)
-                socket.emit('mood_update', { mood, userId });
+                // Add to mood history
+                addMoodEntry(mood, moodLabel);
+                
+                // Send mood data to server
+                if (isConnected) {
+                    socket.emit('mood_update', { mood, userId, label: moodLabel });
+                }
                 
                 // Show confirmation
                 setTimeout(() => {
-                    alert(`Mood "${moodLabel}" recorded! Thank you for sharing.`);
+                    // Create a nice notification instead of alert
+                    showNotification(`Mood "${moodLabel}" recorded! Thank you for sharing. 💙`);
                 }, 500);
             });
         });
+
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #8b5cf6, #a855f7);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+                z-index: 1000;
+                animation: slideInRight 0.3s ease;
+                max-width: 300px;
+            `;
+            notification.textContent = message;
+            
+            // Add animation keyframes
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOutRight {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
 
         // Toggle functionality for profile settings
         document.querySelectorAll('.toggle').forEach(toggle => {
             toggle.addEventListener('click', () => {
                 toggle.classList.toggle('active');
-                // You can emit setting changes to server here
-                // socket.emit('settings_update', { setting: 'name', value: toggle.classList.contains('active') });
+                const setting = toggle.getAttribute('data-setting');
+                
+                // Save setting to localStorage
+                const isActive = toggle.classList.contains('active');
+                localStorage.setItem(setting, isActive.toString());
+                
+                // Optional: Send setting to server
+                if (isConnected) {
+                    socket.emit('settings_update', { 
+                        setting, 
+                        value: isActive, 
+                        userId 
+                    });
+                }
             });
         });
 
-        // Initialize
+        // Load saved settings
+        function loadSettings() {
+            document.querySelectorAll('.toggle').forEach(toggle => {
+                const setting = toggle.getAttribute('data-setting');
+                const saved = localStorage.getItem(setting);
+                
+                if (saved === 'true') {
+                    toggle.classList.add('active');
+                } else if (saved === 'false') {
+                    toggle.classList.remove('active');
+                }
+            });
+        }
+
+        // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
-            // Focus on message input when page loads if chat is active
-            const activeChatTab = document.querySelector('.nav-tab.active[data-section="chat"]');
-            if (activeChatTab) {
-                messageInput.focus();
+            updateMoodHistory();
+            loadSettings();
+            
+            // Add welcome message when page loads
+            setTimeout(() => {
+                if (messagesContainer.children.length === 0) {
+                    addMessage('Welcome! I\'m Empatha, your emotional wellness companion. How are you feeling today? 💙', false, 'caring');
+                }
+            }, 1000);
+        });
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !isConnected) {
+                // Try to reconnect when page becomes visible
+                socket.connect();
             }
         });
+
+        // Prevent form submission on enter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target !== messageInput) {
+                e.preventDefault();
+            }
+        });
+
+        console.log('🚀 Empatha initialized with user ID:', userId);
     </script>
 </body>
 </html>
