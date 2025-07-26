@@ -3,7 +3,7 @@
 
 **Empatha** is an emotionally intelligent AI chatbot designed for elder care and mental wellness support. It listens, understands your emotions, and responds with compassion in real time. Now live at:
 
-🔗[Live Demo →](https://empatha-ai-chatbot.onrender.com)
+🔗[Live Demo →](https://empatha-ai-chatbot.onrender.com/)
 
 ---
 
