@@ -1025,28 +1025,28 @@
             textDiv.textContent = text;
             messageDiv.appendChild(textDiv);
 
-            // Add emotion tag if present
-            if (emotion && !isUser) {
-                const emotionTag = document.createElement('span');
-                emotionTag.className = `message-tag emotion-${emotion}`;
-                emotionTag.textContent = emotion;
-                messageDiv.appendChild(emotionTag);
-            }
+            // Optionally add emotion tag (uncomment if you want to show emotions)
+            // if (emotion && !isUser) {
+            //     const emotionTag = document.createElement('span');
+            //     emotionTag.className = `message-tag emotion-${emotion}`;
+            //     emotionTag.textContent = emotion;
+            //     messageDiv.appendChild(emotionTag);
+            // }
 
-            // Add actions if present (for AI messages)
-            if (!isUser && actions && actions.length > 0) {
-                const actionsContainer = document.createElement('div');
-                actionsContainer.className = 'actions-container';
-                
-                actions.forEach(action => {
-                    const actionItem = document.createElement('div');
-                    actionItem.className = `action-item ${action.success ? 'action-success' : 'action-error'}`;
-                    actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error || 'Failed'})`}`;
-                    actionsContainer.appendChild(actionItem);
-                });
-                
-                messageDiv.appendChild(actionsContainer);
-            }
+            // Actions are hidden for cleaner UI
+            // if (!isUser && actions && actions.length > 0) {
+            //     const actionsContainer = document.createElement('div');
+            //     actionsContainer.className = 'actions-container';
+            //     
+            //     actions.forEach(action => {
+            //         const actionItem = document.createElement('div');
+            //         actionItem.className = `action-item ${action.success ? 'action-success' : 'action-error'}`;
+            //         actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error || 'Failed'})`}`;
+            //         actionsContainer.appendChild(actionItem);
+            //     });
+            //     
+            //     messageDiv.appendChild(actionsContainer);
+            // }
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
