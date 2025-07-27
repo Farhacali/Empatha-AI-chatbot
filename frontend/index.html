@@ -1355,7 +1355,17 @@
             }
 
             async login(email, password) {
+                console.log('AuthManager.login called with:', email);
+                
+                // Basic validation
+                if (!email || !password) {
+                    this.showError('loginForm', 'Please fill in all fields.');
+                    return false;
+                }
+
                 try {
+                    console.log('Making login request to:', `${this.apiBaseUrl}/auth/login`);
+                    
                     const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
                         method: 'POST',
                         headers: {
@@ -1364,7 +1374,9 @@
                         body: JSON.stringify({ email, password })
                     });
 
+                    console.log('Login response status:', response.status);
                     const data = await response.json();
+                    console.log('Login response data:', data);
 
                     if (data.success) {
                         this.currentUser = data.user;
@@ -1380,17 +1392,31 @@
                         this.showSuccess('loginForm', 'Welcome back! Redirecting...');
                         return true;
                     } else {
-                        this.showError('loginForm', data.message);
+                        this.showError('loginForm', data.message || 'Login failed');
                         return false;
                     }
                 } catch (error) {
                     console.error('Login error:', error);
-                    this.showError('loginForm', 'Connection error. Please check your internet connection and try again.');
+                    
+                    // Check if it's a network error
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        this.showError('loginForm', 'Cannot connect to server. Please check if the backend is running.');
+                    } else {
+                        this.showError('loginForm', 'Connection error. Please check your internet connection and try again.');
+                    }
                     return false;
                 }
             }
 
             async register(name, email, password, confirmPassword) {
+                console.log('AuthManager.register called with:', name, email);
+                
+                // Basic validation
+                if (!name || !email || !password || !confirmPassword) {
+                    this.showError('registerForm', 'Please fill in all fields.');
+                    return false;
+                }
+
                 if (password !== confirmPassword) {
                     this.showError('registerForm', 'Passwords do not match.');
                     return false;
@@ -1402,6 +1428,8 @@
                 }
 
                 try {
+                    console.log('Making register request to:', `${this.apiBaseUrl}/auth/register`);
+                    
                     const response = await fetch(`${this.apiBaseUrl}/auth/register`, {
                         method: 'POST',
                         headers: {
@@ -1410,7 +1438,9 @@
                         body: JSON.stringify({ name, email, password })
                     });
 
+                    console.log('Register response status:', response.status);
                     const data = await response.json();
+                    console.log('Register response data:', data);
 
                     if (data.success) {
                         this.currentUser = data.user;
@@ -1426,17 +1456,24 @@
                         this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
                         return true;
                     } else {
-                        this.showError('registerForm', data.message);
+                        this.showError('registerForm', data.message || 'Registration failed');
                         return false;
                     }
                 } catch (error) {
                     console.error('Registration error:', error);
-                    this.showError('registerForm', 'Connection error. Please check your internet connection and try again.');
+                    
+                    // Check if it's a network error
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        this.showError('registerForm', 'Cannot connect to server. Please check if the backend is running.');
+                    } else {
+                        this.showError('registerForm', 'Connection error. Please check your internet connection and try again.');
+                    }
                     return false;
                 }
             }
 
             continueAsGuest() {
+                console.log('Continuing as guest');
                 this.isGuest = true;
                 this.currentUser = { 
                     name: 'Guest', 
@@ -1451,6 +1488,44 @@
                 
                 this.hideAuthOverlay();
                 this.updateUserInterface();
+                
+                // Show a message about guest mode
+                setTimeout(() => {
+                    this.showNotification('Welcome! You\'re using guest mode. Your data will be saved locally.');
+                }, 1000);
+            }
+
+            showNotification(message) {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+                    color: white;
+                    padding: 16px 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+                    z-index: 1001;
+                    animation: slideInRight 0.3s ease;
+                    max-width: 300px;
+                `;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Remove after 4 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.animation = 'slideOutRight 0.3s ease';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 300);
+                    }
+                }, 4000);
             }
 
             async logout() {
@@ -1702,59 +1777,102 @@
 
         // Initialize socket connection after authentication
         function initializeSocket() {
+            console.log('Initializing socket connection...');
+            
             if (socket) {
                 socket.disconnect();
             }
             
-            // Real Socket.io connection
-            socket = io();
-            userId = authManager.getCurrentUserId();
+            try {
+                // Real Socket.io connection
+                socket = io();
+                userId = authManager.getCurrentUserId();
+                console.log('Socket created for user:', userId);
 
-            // Real Socket.io event handlers
-            socket.on('connect', () => {
-                console.log('✅ Connected to server:', socket.id);
-                isConnected = true;
-                connectionStatus.textContent = 'Connected';
-                connectionStatus.classList.add('connected');
-                connectionStatus.classList.remove('disconnected');
-                chatStatus.textContent = 'Online and ready to help';
-                statusDot.classList.remove('disconnected');
-                
-                // Increment session count
-                sessionCount++;
-                localStorage.setItem('sessionCount', sessionCount.toString());
-                document.getElementById('sessionCount').textContent = sessionCount;
+                // Connection timeout
+                const connectionTimeout = setTimeout(() => {
+                    console.log('Socket connection timeout - falling back to demo mode');
+                    handleSocketFallback();
+                }, 5000);
 
-                // Send user info to server
-                socket.emit('user_connected', {
-                    userId: userId,
-                    userName: authManager.currentUser?.name || 'Guest',
-                    isGuest: authManager.isGuest
+                // Real Socket.io event handlers
+                socket.on('connect', () => {
+                    clearTimeout(connectionTimeout);
+                    console.log('✅ Connected to server:', socket.id);
+                    isConnected = true;
+                    connectionStatus.textContent = 'Connected';
+                    connectionStatus.classList.add('connected');
+                    connectionStatus.classList.remove('disconnected');
+                    chatStatus.textContent = 'Online and ready to help';
+                    statusDot.classList.remove('disconnected');
+                    
+                    // Increment session count
+                    sessionCount++;
+                    localStorage.setItem('sessionCount', sessionCount.toString());
+                    document.getElementById('sessionCount').textContent = sessionCount;
+
+                    // Send user info to server
+                    socket.emit('user_connected', {
+                        userId: userId,
+                        userName: authManager.currentUser?.name || 'Guest',
+                        isGuest: authManager.isGuest
+                    });
                 });
-            });
 
-            socket.on('disconnect', () => {
-                console.log('❌ Disconnected from server');
-                isConnected = false;
-                connectionStatus.textContent = 'Disconnected';
-                connectionStatus.classList.add('disconnected');
-                connectionStatus.classList.remove('connected');
-                chatStatus.textContent = 'Reconnecting...';
-                statusDot.classList.add('disconnected');
-            });
+                socket.on('connect_error', (error) => {
+                    clearTimeout(connectionTimeout);
+                    console.log('❌ Socket connection error:', error);
+                    handleSocketFallback();
+                });
 
-            socket.on('response', (data) => {
-                removeTypingIndicator();
-                addMessage(data.response, false, data.emotion, data.actions);
-                sendBtn.disabled = false;
-            });
+                socket.on('disconnect', () => {
+                    console.log('❌ Disconnected from server');
+                    isConnected = false;
+                    connectionStatus.textContent = 'Disconnected';
+                    connectionStatus.classList.add('disconnected');
+                    connectionStatus.classList.remove('connected');
+                    chatStatus.textContent = 'Reconnecting...';
+                    statusDot.classList.add('disconnected');
+                });
 
-            socket.on('error', (err) => {
-                removeTypingIndicator();
-                addMessage('Sorry, I encountered an issue. Please try again.', false);
-                console.error('Socket error:', err);
-                sendBtn.disabled = false;
-            });
+                socket.on('response', (data) => {
+                    removeTypingIndicator();
+                    addMessage(data.response, false, data.emotion, data.actions);
+                    sendBtn.disabled = false;
+                });
+
+                socket.on('error', (err) => {
+                    removeTypingIndicator();
+                    addMessage('Sorry, I encountered an issue. Please try again.', false);
+                    console.error('Socket error:', err);
+                    sendBtn.disabled = false;
+                });
+
+            } catch (error) {
+                console.error('Socket initialization error:', error);
+                handleSocketFallback();
+            }
+        }
+
+        // Fallback to demo mode if socket connection fails
+        function handleSocketFallback() {
+            console.log('Falling back to demo mode');
+            isConnected = true; // Set to true for demo mode
+            connectionStatus.textContent = 'Demo Mode';
+            connectionStatus.classList.add('connected');
+            connectionStatus.classList.remove('disconnected');
+            chatStatus.textContent = 'Demo mode - responses are simulated';
+            statusDot.classList.remove('disconnected');
+            
+            // Increment session count
+            sessionCount++;
+            localStorage.setItem('sessionCount', sessionCount.toString());
+            document.getElementById('sessionCount').textContent = sessionCount;
+            
+            // Show notification about demo mode
+            setTimeout(() => {
+                showNotification('Running in demo mode. Backend server not available.');
+            }, 1000);
         }
 
         // Updated mood functionality to integrate with API
@@ -1810,6 +1928,8 @@
             const message = messageInput.value.trim();
             if (message === '' || !isConnected) return;
 
+            console.log('Sending message:', message);
+
             // Add user message to chat
             addMessage(message, true);
             messageInput.value = '';
@@ -1818,15 +1938,72 @@
             sendBtn.disabled = true;
             showTypingIndicator();
 
-            // Send message to server via socket
-            socket.emit('message', { message, userId });
+            // Send message to server via socket or use demo mode
+            if (socket && socket.connected) {
+                console.log('Sending via socket');
+                socket.emit('message', { message, userId });
+            } else {
+                console.log('Using demo mode response');
+                // Demo mode - simulate AI response
+                setTimeout(() => {
+                    removeTypingIndicator();
+                    
+                    const aiResponse = generateDemoAIResponse(message);
+                    const emotion = detectDemoEmotion(message);
+                    
+                    addMessage(aiResponse, false, emotion);
+                    sendBtn.disabled = false;
+                }, 1500 + Math.random() * 1000);
+            }
+        }
+
+        // Demo AI response generation (fallback when backend is not available)
+        function generateDemoAIResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
+                return "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. Your emotions are valid. Would you like to talk about what's contributing to these feelings?";
+            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
+                return "I'm so glad to hear you're feeling good! It's wonderful when we can recognize and appreciate positive moments. What's been contributing to your happiness today?";
+            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
+                return "Anxiety can feel overwhelming, but you're not alone in this. Taking a moment to acknowledge these feelings is already a brave step. Would some breathing exercises or grounding techniques be helpful right now?";
+            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
+                return "Anger is a natural emotion, and it often signals that something important to you has been affected. It's okay to feel this way. Would you like to explore what might be underneath this frustration?";
+            } else if (message.includes('tired') || message.includes('exhausted') || message.includes('sleep')) {
+                return "Feeling tired can affect everything - our mood, thoughts, and ability to cope. Rest is so important for our wellbeing. Have you been able to get enough quality sleep lately?";
+            } else if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
+                return "Hello! I'm so glad you're here. I'm Empatha, and I'm here to listen and support you. How are you feeling today?";
+            } else if (message.includes('help') || message.includes('support')) {
+                return "I'm here to help and support you in whatever way I can. Whether you need someone to listen, want to explore your feelings, or are looking for coping strategies, I'm here for you. What would be most helpful right now?";
+            } else {
+                return "Thank you for sharing that with me. I'm here to listen and understand. Your feelings and experiences matter. Would you like to tell me more about what's on your mind?";
+            }
+        }
+
+        function detectDemoEmotion(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
+                return 'caring';
+            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
+                return 'happy';
+            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
+                return 'concerned';
+            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
+                return 'caring';
+            } else {
+                return 'neutral';
+            }
         }
 
         // Auth form handling
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - Setting up auth handlers');
+            
             // Auth tab switching
             document.querySelectorAll('[data-auth-tab]').forEach(tab => {
-                tab.addEventListener('click', () => {
+                tab.addEventListener('click', (e) => {
+                    console.log('Tab clicked:', tab.getAttribute('data-auth-tab'));
                     const tabName = tab.getAttribute('data-auth-tab');
                     
                     // Update tab appearance
@@ -1844,64 +2021,104 @@
             });
 
             // Real login form handler
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const email = formData.get('email');
-                const password = formData.get('password');
-                
-                const button = e.target.querySelector('.auth-button');
-                button.disabled = true;
-                button.textContent = 'Signing In...';
-                
-                // Real API call
-                const success = await authManager.login(email, password);
-                
-                if (success) {
-                    setTimeout(() => {
-                        initializeSocket();
-                    }, 1000);
-                } else {
-                    button.disabled = false;
-                    button.textContent = 'Sign In';
-                }
-            });
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    console.log('Login form submitted');
+                    
+                    const formData = new FormData(e.target);
+                    const email = formData.get('email');
+                    const password = formData.get('password');
+                    
+                    console.log('Login attempt for:', email);
+                    
+                    const button = e.target.querySelector('.auth-button');
+                    const originalText = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Signing In...';
+                    
+                    try {
+                        // Real API call
+                        const success = await authManager.login(email, password);
+                        
+                        if (success) {
+                            console.log('Login successful');
+                            setTimeout(() => {
+                                initializeSocket();
+                            }, 1000);
+                        } else {
+                            console.log('Login failed');
+                            button.disabled = false;
+                            button.textContent = originalText;
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        authManager.showError('loginForm', 'Login failed. Please try again.');
+                    }
+                });
+            }
 
             // Real register form handler
-            document.getElementById('registerForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const name = formData.get('name');
-                const email = formData.get('email');
-                const password = formData.get('password');
-                const confirmPassword = formData.get('confirmPassword');
-                
-                const button = e.target.querySelector('.auth-button');
-                button.disabled = true;
-                button.textContent = 'Creating Account...';
-                
-                // Real API call
-                const success = await authManager.register(name, email, password, confirmPassword);
-                
-                if (success) {
-                    setTimeout(() => {
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    console.log('Register form submitted');
+                    
+                    const formData = new FormData(e.target);
+                    const name = formData.get('name');
+                    const email = formData.get('email');
+                    const password = formData.get('password');
+                    const confirmPassword = formData.get('confirmPassword');
+                    
+                    console.log('Registration attempt for:', name, email);
+                    
+                    const button = e.target.querySelector('.auth-button');
+                    const originalText = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Creating Account...';
+                    
+                    try {
+                        // Real API call
+                        const success = await authManager.register(name, email, password, confirmPassword);
+                        
+                        if (success) {
+                            console.log('Registration successful');
+                            setTimeout(() => {
+                                initializeSocket();
+                            }, 1000);
+                        } else {
+                            console.log('Registration failed');
+                            button.disabled = false;
+                            button.textContent = originalText;
+                        }
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        button.disabled = false;
+                        button.textContent = originalText;
+                        authManager.showError('registerForm', 'Registration failed. Please try again.');
+                    }
+                });
+            }
+
+            // Guest buttons - both login and register forms
+            const guestButtons = [
+                document.getElementById('guestButton'),
+                document.getElementById('guestButtonRegister')
+            ];
+            
+            guestButtons.forEach((button, index) => {
+                if (button) {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        console.log(`Guest button ${index + 1} clicked`);
+                        authManager.continueAsGuest();
                         initializeSocket();
-                    }, 1000);
-                } else {
-                    button.disabled = false;
-                    button.textContent = 'Sign Up';
+                    });
                 }
-            });
-
-            // Guest buttons
-            document.getElementById('guestButton').addEventListener('click', () => {
-                authManager.continueAsGuest();
-                initializeSocket();
-            });
-
-            document.getElementById('guestButtonRegister').addEventListener('click', () => {
-                authManager.continueAsGuest();
-                initializeSocket();
             });
 
             // User menu functionality
