@@ -1296,16 +1296,16 @@
             constructor() {
                 this.currentUser = null;
                 this.isGuest = false;
-                this.token = null; // Note: localStorage removed for artifact compatibility
-                this.apiBaseUrl = 'http://localhost:3000/api'; // Change this to your server URL
+                // REAL localStorage integration - uncomment for production
+                this.token = localStorage.getItem('authToken');
+                this.apiBaseUrl = process.env.NODE_ENV === 'production' 
+                    ? 'https://your-domain.com/api' 
+                    : 'http://localhost:3000/api'; // Change this to your server URL
                 this.initializeAuth();
             }
 
             async initializeAuth() {
-                // For artifact compatibility, we'll simulate stored data
-                // In a real app, you would check localStorage here
-                
-                // Check if user has a valid token (simulated)
+                // Check if user has a valid token
                 if (this.token) {
                     try {
                         const profile = await this.fetchProfile();
@@ -1318,6 +1318,19 @@
                     } catch (error) {
                         console.log('Token validation failed, removing invalid token');
                         this.clearAuth();
+                    }
+                }
+
+                // Check if user is in guest mode
+                const isGuest = localStorage.getItem('empathaIsGuest') === 'true';
+                if (isGuest) {
+                    const savedUser = localStorage.getItem('empathaUser');
+                    if (savedUser) {
+                        this.isGuest = true;
+                        this.currentUser = JSON.parse(savedUser);
+                        this.hideAuthOverlay();
+                        this.updateUserInterface();
+                        return;
                     }
                 }
 
@@ -1357,10 +1370,10 @@
                         this.currentUser = data.user;
                         this.token = data.token;
                         
-                        // In a real app, save to localStorage here
-                        // localStorage.setItem('authToken', data.token);
-                        // localStorage.setItem('empathaUser', JSON.stringify(data.user));
-                        // localStorage.removeItem('empathaIsGuest');
+                        // Save to localStorage
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('empathaUser', JSON.stringify(data.user));
+                        localStorage.removeItem('empathaIsGuest');
                         
                         this.hideAuthOverlay();
                         this.updateUserInterface();
@@ -1403,10 +1416,10 @@
                         this.currentUser = data.user;
                         this.token = data.token;
                         
-                        // In a real app, save to localStorage here
-                        // localStorage.setItem('authToken', data.token);
-                        // localStorage.setItem('empathaUser', JSON.stringify(data.user));
-                        // localStorage.removeItem('empathaIsGuest');
+                        // Save to localStorage
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('empathaUser', JSON.stringify(data.user));
+                        localStorage.removeItem('empathaIsGuest');
                         
                         this.hideAuthOverlay();
                         this.updateUserInterface();
@@ -1432,9 +1445,10 @@
                     joinedDate: new Date().toISOString(),
                     sessionCount: 0
                 };
-                // In a real app, save to localStorage here
-                // localStorage.setItem('empathaIsGuest', 'true');
-                // localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
+                // Save to localStorage
+                localStorage.setItem('empathaIsGuest', 'true');
+                localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
+                
                 this.hideAuthOverlay();
                 this.updateUserInterface();
             }
@@ -1463,12 +1477,12 @@
                 this.token = null;
                 this.isGuest = false;
                 
-                // In a real app, clear localStorage here
-                // localStorage.removeItem('authToken');
-                // localStorage.removeItem('empathaUser');
-                // localStorage.removeItem('empathaIsGuest');
-                // localStorage.removeItem('sessionCount');
-                // localStorage.removeItem('moodEntries');
+                // Clear localStorage
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('empathaUser');
+                localStorage.removeItem('empathaIsGuest');
+                localStorage.removeItem('sessionCount');
+                localStorage.removeItem('moodEntries');
                 
                 this.showAuthOverlay();
                 this.updateUserInterface();
@@ -1490,10 +1504,11 @@
 
             async updateSettings(settings) {
                 if (this.isGuest) {
-                    // For guest users, just save locally (simulated in artifact)
-                    if (this.currentUser) {
-                        this.currentUser.settings = { ...(this.currentUser.settings || {}), ...settings };
-                    }
+                    // For guest users, just save locally
+                    const user = JSON.parse(localStorage.getItem('empathaUser'));
+                    user.settings = { ...(user.settings || {}), ...settings };
+                    localStorage.setItem('empathaUser', JSON.stringify(user));
+                    this.currentUser = user;
                     return true;
                 }
 
@@ -1512,6 +1527,7 @@
                     if (data.success) {
                         // Update local user data
                         this.currentUser.settings = data.settings;
+                        localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
                         return true;
                     } else {
                         console.error('Settings update failed:', data.message);
@@ -1551,8 +1567,8 @@
 
             async loadMoodHistory() {
                 if (this.isGuest) {
-                    // For guest users, load from memory (simulated for artifact)
-                    return window.moodEntries || [];
+                    // For guest users, load from localStorage (existing functionality)
+                    return JSON.parse(localStorage.getItem('moodEntries') || '[]');
                 }
 
                 try {
@@ -1681,8 +1697,8 @@
 
         // App state
         let isConnected = false;
-        let sessionCount = 0; // Simulated for artifact
-        let moodEntries = []; // Simulated for artifact
+        let sessionCount = parseInt(localStorage.getItem('sessionCount') || '0');
+        let moodEntries = [];
 
         // Initialize socket connection after authentication
         function initializeSocket() {
@@ -1690,13 +1706,13 @@
                 socket.disconnect();
             }
             
-            // Simulate socket connection for artifact demo
-            // In real app: socket = io();
+            // Real Socket.io connection
+            socket = io();
             userId = authManager.getCurrentUserId();
 
-            // Simulate connection
-            setTimeout(() => {
-                console.log('✅ Connected to server (simulated)');
+            // Real Socket.io event handlers
+            socket.on('connect', () => {
+                console.log('✅ Connected to server:', socket.id);
                 isConnected = true;
                 connectionStatus.textContent = 'Connected';
                 connectionStatus.classList.add('connected');
@@ -1706,8 +1722,39 @@
                 
                 // Increment session count
                 sessionCount++;
+                localStorage.setItem('sessionCount', sessionCount.toString());
                 document.getElementById('sessionCount').textContent = sessionCount;
-            }, 1000);
+
+                // Send user info to server
+                socket.emit('user_connected', {
+                    userId: userId,
+                    userName: authManager.currentUser?.name || 'Guest',
+                    isGuest: authManager.isGuest
+                });
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Disconnected from server');
+                isConnected = false;
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.classList.add('disconnected');
+                connectionStatus.classList.remove('connected');
+                chatStatus.textContent = 'Reconnecting...';
+                statusDot.classList.add('disconnected');
+            });
+
+            socket.on('response', (data) => {
+                removeTypingIndicator();
+                addMessage(data.response, false, data.emotion, data.actions);
+                sendBtn.disabled = false;
+            });
+
+            socket.on('error', (err) => {
+                removeTypingIndicator();
+                addMessage('Sorry, I encountered an issue. Please try again.', false);
+                console.error('Socket error:', err);
+                sendBtn.disabled = false;
+            });
         }
 
         // Updated mood functionality to integrate with API
@@ -1728,6 +1775,7 @@
             // Always save locally for immediate UI update
             moodEntries.unshift(entry);
             moodEntries = moodEntries.slice(0, 10);
+            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
             
             updateMoodHistory();
         }
@@ -1735,13 +1783,13 @@
         // Updated mood history loading
         async function loadMoodHistory() {
             if (authManager.isGuest) {
-                moodEntries = window.moodEntries || [];
+                moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
             } else {
                 try {
                     moodEntries = await authManager.loadMoodHistory();
                 } catch (error) {
                     console.error('Failed to load mood history from server, using local data');
-                    moodEntries = [];
+                    moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
                 }
             }
             updateMoodHistory();
@@ -1755,6 +1803,23 @@
             if (!success && !authManager.isGuest) {
                 console.error('Failed to update settings on server');
             }
+        }
+
+        // Real message sending
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === '' || !isConnected) return;
+
+            // Add user message to chat
+            addMessage(message, true);
+            messageInput.value = '';
+
+            // Disable send button and show typing indicator
+            sendBtn.disabled = true;
+            showTypingIndicator();
+
+            // Send message to server via socket
+            socket.emit('message', { message, userId });
         }
 
         // Auth form handling
@@ -1778,7 +1843,7 @@
                 });
             });
 
-            // Login form
+            // Real login form handler
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
@@ -1789,31 +1854,20 @@
                 button.disabled = true;
                 button.textContent = 'Signing In...';
                 
-                // Simulate API call for demo
-                setTimeout(async () => {
-                    if (email && password) {
-                        // Simulate successful login
-                        authManager.currentUser = {
-                            id: 'user_' + Date.now(),
-                            name: email.split('@')[0],
-                            email: email,
-                            joinedDate: new Date().toISOString(),
-                            sessionCount: 0
-                        };
-                        authManager.token = 'demo_token_' + Date.now();
-                        authManager.hideAuthOverlay();
-                        authManager.updateUserInterface();
-                        authManager.showSuccess('loginForm', 'Welcome back! Redirecting...');
+                // Real API call
+                const success = await authManager.login(email, password);
+                
+                if (success) {
+                    setTimeout(() => {
                         initializeSocket();
-                    } else {
-                        authManager.showError('loginForm', 'Please fill in all fields');
-                        button.disabled = false;
-                        button.textContent = 'Sign In';
-                    }
-                }, 1000);
+                    }, 1000);
+                } else {
+                    button.disabled = false;
+                    button.textContent = 'Sign In';
+                }
             });
 
-            // Register form
+            // Real register form handler
             document.getElementById('registerForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
@@ -1826,42 +1880,17 @@
                 button.disabled = true;
                 button.textContent = 'Creating Account...';
                 
-                if (password !== confirmPassword) {
-                    authManager.showError('registerForm', 'Passwords do not match.');
-                    button.disabled = false;
-                    button.textContent = 'Sign Up';
-                    return;
-                }
-
-                if (password.length < 6) {
-                    authManager.showError('registerForm', 'Password must be at least 6 characters long.');
-                    button.disabled = false;
-                    button.textContent = 'Sign Up';
-                    return;
-                }
+                // Real API call
+                const success = await authManager.register(name, email, password, confirmPassword);
                 
-                // Simulate API call for demo
-                setTimeout(async () => {
-                    if (name && email && password) {
-                        // Simulate successful registration
-                        authManager.currentUser = {
-                            id: 'user_' + Date.now(),
-                            name: name,
-                            email: email,
-                            joinedDate: new Date().toISOString(),
-                            sessionCount: 0
-                        };
-                        authManager.token = 'demo_token_' + Date.now();
-                        authManager.hideAuthOverlay();
-                        authManager.updateUserInterface();
-                        authManager.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
+                if (success) {
+                    setTimeout(() => {
                         initializeSocket();
-                    } else {
-                        authManager.showError('registerForm', 'Please fill in all fields');
-                        button.disabled = false;
-                        button.textContent = 'Sign Up';
-                    }
-                }, 1000);
+                    }, 1000);
+                } else {
+                    button.disabled = false;
+                    button.textContent = 'Sign Up';
+                }
             });
 
             // Guest buttons
@@ -1910,7 +1939,7 @@
 
             // Update session count display
             document.getElementById('sessionCount').textContent = sessionCount;
-            updateMoodHistory();
+            loadMoodHistory();
             loadSettings();
             
             // Add welcome message when page loads
@@ -2002,69 +2031,6 @@
             const typingIndicator = document.getElementById('typing-indicator');
             if (typingIndicator) {
                 typingIndicator.remove();
-            }
-        }
-
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (message === '' || !isConnected) return;
-
-            // Add user message to chat
-            addMessage(message, true);
-            messageInput.value = '';
-
-            // Disable send button and show typing indicator
-            sendBtn.disabled = true;
-            showTypingIndicator();
-
-            // Simulate AI response for demo
-            setTimeout(() => {
-                removeTypingIndicator();
-                
-                // Generate a contextual response based on the message
-                let response = generateAIResponse(message);
-                let emotion = detectEmotion(message);
-                
-                addMessage(response, false, emotion);
-                sendBtn.disabled = false;
-            }, 1500 + Math.random() * 1000);
-        }
-
-        function generateAIResponse(userMessage) {
-            const message = userMessage.toLowerCase();
-            
-            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
-                return "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. Your emotions are valid. Would you like to talk about what's contributing to these feelings?";
-            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
-                return "I'm so glad to hear you're feeling good! It's wonderful when we can recognize and appreciate positive moments. What's been contributing to your happiness today?";
-            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
-                return "Anxiety can feel overwhelming, but you're not alone in this. Taking a moment to acknowledge these feelings is already a brave step. Would some breathing exercises or grounding techniques be helpful right now?";
-            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
-                return "Anger is a natural emotion, and it often signals that something important to you has been affected. It's okay to feel this way. Would you like to explore what might be underneath this frustration?";
-            } else if (message.includes('tired') || message.includes('exhausted') || message.includes('sleep')) {
-                return "Feeling tired can affect everything - our mood, thoughts, and ability to cope. Rest is so important for our wellbeing. Have you been able to get enough quality sleep lately?";
-            } else if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-                return "Hello! I'm so glad you're here. I'm Empatha, and I'm here to listen and support you. How are you feeling today?";
-            } else if (message.includes('help') || message.includes('support')) {
-                return "I'm here to help and support you in whatever way I can. Whether you need someone to listen, want to explore your feelings, or are looking for coping strategies, I'm here for you. What would be most helpful right now?";
-            } else {
-                return "Thank you for sharing that with me. I'm here to listen and understand. Your feelings and experiences matter. Would you like to tell me more about what's on your mind?";
-            }
-        }
-
-        function detectEmotion(userMessage) {
-            const message = userMessage.toLowerCase();
-            
-            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
-                return 'caring';
-            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
-                return 'happy';
-            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
-                return 'concerned';
-            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
-                return 'caring';
-            } else {
-                return 'neutral';
             }
         }
 
@@ -2205,7 +2171,7 @@
                 toggle.classList.toggle('active');
                 const setting = toggle.getAttribute('data-setting');
                 
-                // Save setting (simulated for artifact)
+                // Save setting
                 const isActive = toggle.classList.contains('active');
                 
                 // Update settings via auth manager
@@ -2215,13 +2181,21 @@
 
         // Load saved settings
         function loadSettings() {
-            // Simulate loading settings - in real app this would come from localStorage or API
+            // Load settings from localStorage or use defaults
+            const savedSettings = authManager.currentUser?.settings || {};
+            
             document.querySelectorAll('.toggle').forEach(toggle => {
                 const setting = toggle.getAttribute('data-setting');
                 
-                // Default some settings to active
-                if (setting === 'daily-checkins' || setting === 'mood-reminders') {
+                // Check if setting is saved, otherwise use default
+                const isActive = savedSettings[setting] !== undefined ? 
+                    savedSettings[setting] : 
+                    (setting === 'daily-checkins' || setting === 'mood-reminders');
+                
+                if (isActive) {
                     toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
                 }
             });
         }
@@ -2240,28 +2214,6 @@
                 e.preventDefault();
             }
         });
-
-        // Initialize default mood entries for demo
-        window.moodEntries = [
-            {
-                mood: 'happy',
-                label: 'Happy',
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                displayTime: '2 hours ago'
-            },
-            {
-                mood: 'neutral',
-                label: 'Neutral',
-                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-                displayTime: 'Yesterday'
-            },
-            {
-                mood: 'very-happy',
-                label: 'Very Happy',
-                timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                displayTime: '2 days ago'
-            }
-        ];
 
         console.log('🚀 Empatha with Real API Authentication initialized');
     </script>
