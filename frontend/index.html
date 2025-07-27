@@ -1337,7 +1337,7 @@
             }
 
             async fetchProfile() {
-                const response = await fetch(`${this.apiBaseUrl}/auth/profile`, {
+                const response = await fetch(`${this.apiBaseUrl}/user/profile`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${this.token}`,
@@ -1362,9 +1362,9 @@
                 }
 
                 try {
-                    console.log('Making login request to:', `${this.apiBaseUrl}/auth/login`);
+                    console.log('Making login request to:', `${this.apiBaseUrl}/user/login`);
                     
-                    const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
+                    const response = await fetch(`${this.apiBaseUrl}/user/login`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1426,9 +1426,9 @@
                 }
 
                 try {
-                    console.log('Making register request to:', `${this.apiBaseUrl}/auth/register`);
+                    console.log('Making register request to:', `${this.apiBaseUrl}/user/register`);
                     
-                    const response = await fetch(`${this.apiBaseUrl}/auth/register`, {
+                    const response = await fetch(`${this.apiBaseUrl}/user/register`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1530,7 +1530,7 @@
                 try {
                     // Call logout endpoint if user is authenticated
                     if (this.token && !this.isGuest) {
-                        await fetch(`${this.apiBaseUrl}/auth/logout`, {
+                        await fetch(`${this.apiBaseUrl}/user/logout`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${this.token}`,
@@ -1586,7 +1586,7 @@
                 }
 
                 try {
-                    const response = await fetch(`${this.apiBaseUrl}/auth/settings`, {
+                    const response = await fetch(`${this.apiBaseUrl}/user/settings`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${this.token}`,
