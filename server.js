@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -46,13 +45,15 @@ try {
   const chatRoutes = require('./routes/chat');
   const reminderRoutes = require('./routes/Reminders');
   const healthRoutes = require('./routes/health');
-  
+  const moodRoutes = require('./routes/mood'); // ✅ Added mood routes
+
   // ✅ Route middleware
   app.use('/api/user', userRoutes);
   app.use('/api/chat', chatRoutes);
   app.use('/api/reminders', reminderRoutes);
   app.use('/api/health', healthRoutes);
-  
+  app.use('/api/mood', moodRoutes); // ✅ Mounted mood routes
+
   console.log('✅ API routes loaded');
 } catch (error) {
   console.log('⚠️ Some API routes not found, continuing without them:', error.message);
@@ -60,12 +61,11 @@ try {
 
 // ✅ Serve static frontend files
 app.use(express.static(path.join(__dirname, 'frontend')));
-
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// ✅ Fallback AI responses when GROQ fails
+// ✅ Fallback AI responses
 const fallbackResponses = [
   "I'm here to listen. How are you feeling today?",
   "That sounds important to you. Tell me more about what's on your mind.",
@@ -78,24 +78,22 @@ function getFallbackResponse() {
   return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
 }
 
-// ✅ GROQ-powered Socket.IO Chat with enhanced debugging
+// ✅ GROQ-powered Socket.IO Chat
 io.on('connection', (socket) => {
   console.log(`📡 New socket connected: ${socket.id}`);
-  
-  // Send welcome message
+
   socket.emit('response', {
     response: 'Hello! I\'m Empatha, your wellness companion. How are you feeling today? 💙',
     emotion: 'caring',
     actions: [{ action: 'Connected to server', success: true }]
   });
-  
+
   socket.on('message', async (data) => {
     const userMessage = data.message;
     const userId = data.userId;
-    
+
     console.log(`💬 Message from ${userId}: ${userMessage}`);
-    
-    // Check if GROQ API key exists
+
     if (!process.env.GROQ_API_KEY) {
       console.log('⚠️ GROQ API key missing, using fallback response');
       socket.emit('response', {
@@ -105,10 +103,9 @@ io.on('connection', (socket) => {
       });
       return;
     }
-    
+
     try {
       console.log('🤖 Calling GROQ API...');
-      
       const groqResponse = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
@@ -128,21 +125,19 @@ io.on('connection', (socket) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
           },
-          timeout: 10000 // 10 second timeout
+          timeout: 10000
         }
       );
-      
+
       const reply = groqResponse.data.choices[0].message.content.trim();
       console.log('✅ GROQ response received:', reply.substring(0, 50) + '...');
-      
-      // Analyze emotion (simple keyword-based)
+
       let emotion = 'neutral';
       const lowerReply = reply.toLowerCase();
       if (lowerReply.includes('sorry') || lowerReply.includes('understand')) emotion = 'caring';
       if (lowerReply.includes('great') || lowerReply.includes('wonderful')) emotion = 'happy';
       if (lowerReply.includes('concern') || lowerReply.includes('worry')) emotion = 'concerned';
-      
-      // ✅ Send AI reply to client
+
       socket.emit('response', {
         response: reply,
         emotion: emotion,
@@ -151,16 +146,9 @@ io.on('connection', (socket) => {
           { action: 'Emotion analysis', success: true }
         ]
       });
-      
+
     } catch (err) {
       console.error('❌ GROQ API error:', err.message);
-      console.error('Error details:', {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data
-      });
-      
-      // Use fallback response
       socket.emit('response', {
         response: getFallbackResponse(),
         emotion: 'caring',
@@ -171,8 +159,7 @@ io.on('connection', (socket) => {
       });
     }
   });
-  
-  // Handle test messages
+
   socket.on('test', (data) => {
     console.log('🧪 Test message received:', data);
     socket.emit('response', {
@@ -184,8 +171,7 @@ io.on('connection', (socket) => {
       ]
     });
   });
-  
-  // Handle mood updates
+
   socket.on('mood_update', (data) => {
     console.log('😊 Mood update received:', data);
     socket.emit('response', {
@@ -196,12 +182,11 @@ io.on('connection', (socket) => {
       ]
     });
   });
-  
+
   socket.on('disconnect', () => {
     console.log(`❌ Socket disconnected: ${socket.id}`);
   });
-  
-  // Debug: Log all incoming events
+
   socket.onAny((eventName, ...args) => {
     console.log(`📡 Socket event: ${eventName}`, args);
   });
@@ -216,3 +201,4 @@ server.listen(PORT, () => {
   console.log(`   - GROQ API: ${process.env.GROQ_API_KEY ? 'Configured' : 'Not configured (will use fallbacks)'}`);
   console.log(`   - MongoDB: ${process.env.MONGO_URI ? 'Configured' : 'Not configured'}`);
 });
+
