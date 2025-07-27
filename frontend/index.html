@@ -21,7 +21,270 @@
             overflow-x: hidden;
         }
 
-        /* Header */
+        /* Auth Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .auth-overlay.hidden {
+            display: none;
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 24px;
+        }
+
+        .auth-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 32px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            color: #ffffff;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .guest-button {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .guest-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .auth-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .auth-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        /* User Menu */
+        .user-menu {
+            position: relative;
+            display: none;
+        }
+
+        .user-menu.visible {
+            display: block;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px 0;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+        }
+
+        /* Update existing styles to accommodate auth */
         .header {
             display: flex;
             justify-content: space-between;
@@ -713,20 +976,105 @@
             .mood-option {
                 min-width: auto;
             }
+
+            .auth-container {
+                margin: 20px;
+                padding: 32px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Authentication Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <div class="auth-logo">💜</div>
+            <h1 class="auth-title">Welcome to Empatha</h1>
+            <p class="auth-subtitle">Your emotionally intelligent AI wellness companion</p>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-auth-tab="login">Sign In</div>
+                <div class="auth-tab" data-auth-tab="register">Sign Up</div>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form active" id="loginForm">
+                <div id="authMessage"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" name="password" placeholder="Enter your password" required>
+                </div>
+                
+                <button type="submit" class="auth-button">Sign In</button>
+                <button type="button" class="guest-button" id="guestButton">Continue as Guest</button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm">
+                <div id="registerMessage"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" name="name" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" name="password" placeholder="Create a password" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" class="form-input" name="confirmPassword" placeholder="Confirm your password" required>
+                </div>
+                
+                <button type="submit" class="auth-button">Sign Up</button>
+                <button type="button" class="guest-button" id="guestButtonRegister">Continue as Guest</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Header -->
     <div class="header">
         <div class="logo-section">
-            <div class="logo">💝</div>
+            <div class="logo">💜</div>
             <div class="logo-text">
                 <div class="logo-title">Empatha</div>
                 <div class="logo-subtitle">Always here to listen</div>
             </div>
         </div>
-        <div class="connection-status">Connecting...</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="connection-status">Connecting...</div>
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatar"></div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-item" id="profileMenuItem">
+                        <span>👤</span>
+                        <span>Profile</span>
+                    </div>
+                    <div class="dropdown-item" id="settingsMenuItem">
+                        <span>⚙️</span>
+                        <span>Settings</span>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item" id="logoutMenuItem">
+                        <span>🚪</span>
+                        <span>Sign Out</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Navigation -->
@@ -887,11 +1235,19 @@
                     <h3>👤 Personal Information</h3>
                     <div class="setting-item">
                         <span>Name</span>
-                        <span style="color: #14b8a6;">User</span>
+                        <span style="color: #14b8a6;" id="profileName">User</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Email</span>
+                        <span style="color: rgba(255, 255, 255, 0.7);" id="profileEmail">Not set</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>Account Type</span>
+                        <span style="color: #14b8a6;" id="accountType">Guest</span>
                     </div>
                     <div class="setting-item">
                         <span>Joined</span>
-                        <span style="color: rgba(255, 255, 255, 0.7);">July 2025</span>
+                        <span style="color: rgba(255, 255, 255, 0.7);" id="joinedDate">Today</span>
                     </div>
                     <div class="setting-item">
                         <span>Sessions</span>
@@ -935,9 +1291,252 @@
     </div>
 
     <script>
+        // Authentication and user management
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.isGuest = false;
+                this.initializeAuth();
+            }
+
+            initializeAuth() {
+                // Check if user is already logged in
+                const savedUser = localStorage.getItem('empathaUser');
+                const isGuest = localStorage.getItem('empathaIsGuest') === 'true';
+                
+                if (savedUser && !isGuest) {
+                    this.currentUser = JSON.parse(savedUser);
+                    this.hideAuthOverlay();
+                    this.updateUserInterface();
+                } else if (isGuest) {
+                    this.isGuest = true;
+                    this.currentUser = { name: 'Guest', email: 'guest@local', id: 'guest_' + Date.now() };
+                    this.hideAuthOverlay();
+                    this.updateUserInterface();
+                } else {
+                    this.showAuthOverlay();
+                }
+            }
+
+            async login(email, password) {
+                try {
+                    // Simulate API call - replace with your actual authentication endpoint
+                    const response = await this.simulateLogin(email, password);
+                    
+                    if (response.success) {
+                        this.currentUser = response.user;
+                        localStorage.setItem('empathaUser', JSON.stringify(response.user));
+                        localStorage.removeItem('empathaIsGuest');
+                        this.hideAuthOverlay();
+                        this.updateUserInterface();
+                        this.showSuccess('loginForm', 'Welcome back! Redirecting...');
+                        return true;
+                    } else {
+                        this.showError('loginForm', response.message);
+                        return false;
+                    }
+                } catch (error) {
+                    this.showError('loginForm', 'Connection error. Please try again.');
+                    console.error('Login error:', error);
+                    return false;
+                }
+            }
+
+            async register(name, email, password, confirmPassword) {
+                if (password !== confirmPassword) {
+                    this.showError('registerForm', 'Passwords do not match.');
+                    return false;
+                }
+
+                if (password.length < 6) {
+                    this.showError('registerForm', 'Password must be at least 6 characters long.');
+                    return false;
+                }
+
+                try {
+                    // Simulate API call - replace with your actual registration endpoint
+                    const response = await this.simulateRegister(name, email, password);
+                    
+                    if (response.success) {
+                        this.currentUser = response.user;
+                        localStorage.setItem('empathaUser', JSON.stringify(response.user));
+                        localStorage.removeItem('empathaIsGuest');
+                        this.hideAuthOverlay();
+                        this.updateUserInterface();
+                        this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
+                        return true;
+                    } else {
+                        this.showError('registerForm', response.message);
+                        return false;
+                    }
+                } catch (error) {
+                    this.showError('registerForm', 'Connection error. Please try again.');
+                    console.error('Registration error:', error);
+                    return false;
+                }
+            }
+
+            continueAsGuest() {
+                this.isGuest = true;
+                this.currentUser = { 
+                    name: 'Guest', 
+                    email: 'guest@local', 
+                    id: 'guest_' + Date.now(),
+                    joinedDate: new Date().toISOString()
+                };
+                localStorage.setItem('empathaIsGuest', 'true');
+                localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
+                this.hideAuthOverlay();
+                this.updateUserInterface();
+            }
+
+            logout() {
+                this.currentUser = null;
+                this.isGuest = false;
+                localStorage.removeItem('empathaUser');
+                localStorage.removeItem('empathaIsGuest');
+                localStorage.removeItem('sessionCount');
+                localStorage.removeItem('moodEntries');
+                this.showAuthOverlay();
+                this.updateUserInterface();
+                
+                // Reset app state
+                if (window.socket && window.socket.connected) {
+                    window.socket.disconnect();
+                }
+                
+                // Clear messages
+                const messagesContainer = document.getElementById('messages');
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = '';
+                }
+                
+                // Switch to home tab
+                switchTab('home');
+            }
+
+            // Simulate authentication API calls - replace with real API calls
+            async simulateLogin(email, password) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+                
+                // Simple demo logic - replace with real authentication
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    return {
+                        success: true,
+                        user: {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            joinedDate: user.joinedDate
+                        }
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: 'Invalid email or password.'
+                    };
+                }
+            }
+
+            async simulateRegister(name, email, password) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+                
+                // Simple demo logic - replace with real registration
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                
+                if (users.find(u => u.email === email)) {
+                    return {
+                        success: false,
+                        message: 'An account with this email already exists.'
+                    };
+                }
+                
+                const newUser = {
+                    id: 'user_' + Date.now(),
+                    name,
+                    email,
+                    password, // In real app, this should be hashed
+                    joinedDate: new Date().toISOString()
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+                
+                return {
+                    success: true,
+                    user: {
+                        id: newUser.id,
+                        name: newUser.name,
+                        email: newUser.email,
+                        joinedDate: newUser.joinedDate
+                    }
+                };
+            }
+
+            showAuthOverlay() {
+                document.getElementById('authOverlay').classList.remove('hidden');
+            }
+
+            hideAuthOverlay() {
+                document.getElementById('authOverlay').classList.add('hidden');
+            }
+
+            updateUserInterface() {
+                const userMenu = document.getElementById('userMenu');
+                const userAvatar = document.getElementById('userAvatar');
+                
+                if (this.currentUser) {
+                    userMenu.classList.add('visible');
+                    userAvatar.textContent = this.currentUser.name.charAt(0).toUpperCase();
+                    
+                    // Update profile information
+                    document.getElementById('profileName').textContent = this.currentUser.name;
+                    document.getElementById('profileEmail').textContent = this.currentUser.email;
+                    document.getElementById('accountType').textContent = this.isGuest ? 'Guest' : 'Registered';
+                    
+                    if (this.currentUser.joinedDate) {
+                        const joinedDate = new Date(this.currentUser.joinedDate);
+                        document.getElementById('joinedDate').textContent = joinedDate.toLocaleDateString();
+                    }
+                } else {
+                    userMenu.classList.remove('visible');
+                }
+            }
+
+            showError(formId, message) {
+                const messageElement = formId === 'loginForm' ? 
+                    document.getElementById('authMessage') : 
+                    document.getElementById('registerMessage');
+                
+                messageElement.innerHTML = `<div class="auth-error">${message}</div>`;
+            }
+
+            showSuccess(formId, message) {
+                const messageElement = formId === 'loginForm' ? 
+                    document.getElementById('authMessage') : 
+                    document.getElementById('registerMessage');
+                
+                messageElement.innerHTML = `<div class="auth-success">${message}</div>`;
+            }
+
+            getCurrentUserId() {
+                return this.currentUser ? this.currentUser.id : 'anonymous';
+            }
+
+            isAuthenticated() {
+                return this.currentUser !== null;
+            }
+        }
+
+        // Initialize authentication manager
+        const authManager = new AuthManager();
+
         // Socket.io connection
-        const socket = io();
-        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let socket;
+        let userId;
 
         // DOM elements
         const messagesContainer = document.getElementById('messages');
@@ -952,6 +1551,193 @@
         let sessionCount = parseInt(localStorage.getItem('sessionCount') || '0');
         let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
 
+        // Initialize socket connection after authentication
+        function initializeSocket() {
+            if (socket) {
+                socket.disconnect();
+            }
+            
+            socket = io();
+            userId = authManager.getCurrentUserId();
+
+            // Socket.io event handlers
+            socket.on('connect', () => {
+                console.log('✅ Connected to server:', socket.id);
+                isConnected = true;
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.classList.add('connected');
+                connectionStatus.classList.remove('disconnected');
+                chatStatus.textContent = 'Online and ready to help';
+                statusDot.classList.remove('disconnected');
+                
+                // Increment session count
+                sessionCount++;
+                localStorage.setItem('sessionCount', sessionCount.toString());
+                document.getElementById('sessionCount').textContent = sessionCount;
+
+                // Send user info to server
+                socket.emit('user_connected', {
+                    userId: userId,
+                    userName: authManager.currentUser?.name || 'Guest',
+                    isGuest: authManager.isGuest
+                });
+            });
+
+            socket.on('disconnect', () => {
+                console.log('❌ Disconnected from server');
+                isConnected = false;
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.classList.add('disconnected');
+                connectionStatus.classList.remove('connected');
+                chatStatus.textContent = 'Reconnecting...';
+                statusDot.classList.add('disconnected');
+            });
+
+            socket.on('response', (data) => {
+                removeTypingIndicator();
+                addMessage(data.response, false, data.emotion, data.actions);
+                sendBtn.disabled = false;
+            });
+
+            socket.on('error', (err) => {
+                removeTypingIndicator();
+                addMessage('Sorry, I encountered an issue. Please try again.', false);
+                console.error('Socket error:', err);
+                sendBtn.disabled = false;
+            });
+        }
+
+        // Auth form handling
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auth tab switching
+            document.querySelectorAll('[data-auth-tab]').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-auth-tab');
+                    
+                    // Update tab appearance
+                    document.querySelectorAll('[data-auth-tab]').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Update form visibility
+                    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                    document.getElementById(tabName + 'Form').classList.add('active');
+                    
+                    // Clear messages
+                    document.getElementById('authMessage').innerHTML = '';
+                    document.getElementById('registerMessage').innerHTML = '';
+                });
+            });
+
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const email = formData.get('email');
+                const password = formData.get('password');
+                
+                const button = e.target.querySelector('.auth-button');
+                button.disabled = true;
+                button.textContent = 'Signing In...';
+                
+                const success = await authManager.login(email, password);
+                
+                if (success) {
+                    setTimeout(() => {
+                        initializeSocket();
+                    }, 1000);
+                } else {
+                    button.disabled = false;
+                    button.textContent = 'Sign In';
+                }
+            });
+
+            // Register form
+            document.getElementById('registerForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const password = formData.get('password');
+                const confirmPassword = formData.get('confirmPassword');
+                
+                const button = e.target.querySelector('.auth-button');
+                button.disabled = true;
+                button.textContent = 'Creating Account...';
+                
+                const success = await authManager.register(name, email, password, confirmPassword);
+                
+                if (success) {
+                    setTimeout(() => {
+                        initializeSocket();
+                    }, 1000);
+                } else {
+                    button.disabled = false;
+                    button.textContent = 'Sign Up';
+                }
+            });
+
+            // Guest buttons
+            document.getElementById('guestButton').addEventListener('click', () => {
+                authManager.continueAsGuest();
+                initializeSocket();
+            });
+
+            document.getElementById('guestButtonRegister').addEventListener('click', () => {
+                authManager.continueAsGuest();
+                initializeSocket();
+            });
+
+            // User menu functionality
+            document.getElementById('userAvatar').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dropdown = document.getElementById('userDropdown');
+                dropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                document.getElementById('userDropdown').classList.remove('show');
+            });
+
+            // User menu items
+            document.getElementById('profileMenuItem').addEventListener('click', () => {
+                switchTab('profile');
+                document.getElementById('userDropdown').classList.remove('show');
+            });
+
+            document.getElementById('settingsMenuItem').addEventListener('click', () => {
+                switchTab('profile');
+                document.getElementById('userDropdown').classList.remove('show');
+            });
+
+            document.getElementById('logoutMenuItem').addEventListener('click', () => {
+                authManager.logout();
+                document.getElementById('userDropdown').classList.remove('show');
+            });
+
+            // Initialize socket if user is already authenticated
+            if (authManager.isAuthenticated()) {
+                initializeSocket();
+            }
+
+            // Update session count display
+            document.getElementById('sessionCount').textContent = sessionCount;
+            updateMoodHistory();
+            loadSettings();
+            
+            // Add welcome message when page loads
+            setTimeout(() => {
+                if (authManager.isAuthenticated() && messagesContainer.children.length === 0) {
+                    const userName = authManager.currentUser.name;
+                    const greeting = authManager.isGuest ? 
+                        'Welcome! I\'m Empatha, your emotional wellness companion. How are you feeling today? 💙' :
+                        `Welcome back, ${userName}! I\'m here to support your wellness journey. How are you feeling today? 💙`;
+                    addMessage(greeting, false, 'caring');
+                }
+            }, 2000);
+        });
+
+        // Rest of the existing JavaScript code (chat functionality, mood tracking, etc.)
         // Update session count display
         document.getElementById('sessionCount').textContent = sessionCount;
 
@@ -977,45 +1763,6 @@
             });
         });
 
-        // Socket.io event handlers
-        socket.on('connect', () => {
-            console.log('✅ Connected to server:', socket.id);
-            isConnected = true;
-            connectionStatus.textContent = 'Connected';
-            connectionStatus.classList.add('connected');
-            connectionStatus.classList.remove('disconnected');
-            chatStatus.textContent = 'Online and ready to help';
-            statusDot.classList.remove('disconnected');
-            
-            // Increment session count
-            sessionCount++;
-            localStorage.setItem('sessionCount', sessionCount.toString());
-            document.getElementById('sessionCount').textContent = sessionCount;
-        });
-
-        socket.on('disconnect', () => {
-            console.log('❌ Disconnected from server');
-            isConnected = false;
-            connectionStatus.textContent = 'Disconnected';
-            connectionStatus.classList.add('disconnected');
-            connectionStatus.classList.remove('connected');
-            chatStatus.textContent = 'Reconnecting...';
-            statusDot.classList.add('disconnected');
-        });
-
-        socket.on('response', (data) => {
-            removeTypingIndicator();
-            addMessage(data.response, false, data.emotion, data.actions);
-            sendBtn.disabled = false;
-        });
-
-        socket.on('error', (err) => {
-            removeTypingIndicator();
-            addMessage('Sorry, I encountered an issue. Please try again.', false);
-            console.error('Socket error:', err);
-            sendBtn.disabled = false;
-        });
-
         // Chat functionality
         function addMessage(text, isUser = false, emotion = null, actions = []) {
             const messageDiv = document.createElement('div');
@@ -1024,29 +1771,6 @@
             const textDiv = document.createElement('div');
             textDiv.textContent = text;
             messageDiv.appendChild(textDiv);
-
-            // Optionally add emotion tag (uncomment if you want to show emotions)
-            // if (emotion && !isUser) {
-            //     const emotionTag = document.createElement('span');
-            //     emotionTag.className = `message-tag emotion-${emotion}`;
-            //     emotionTag.textContent = emotion;
-            //     messageDiv.appendChild(emotionTag);
-            // }
-
-            // Actions are hidden for cleaner UI
-            // if (!isUser && actions && actions.length > 0) {
-            //     const actionsContainer = document.createElement('div');
-            //     actionsContainer.className = 'actions-container';
-            //     
-            //     actions.forEach(action => {
-            //         const actionItem = document.createElement('div');
-            //         actionItem.className = `action-item ${action.success ? 'action-success' : 'action-error'}`;
-            //         actionItem.textContent = `${action.action}: ${action.success ? '✅' : `❌ (${action.error || 'Failed'})`}`;
-            //         actionsContainer.appendChild(actionItem);
-            //     });
-            //     
-            //     messageDiv.appendChild(actionsContainer);
-            // }
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1093,14 +1817,18 @@
         }
 
         // Event listeners for chat
-        sendBtn.addEventListener('click', sendMessage);
+        if (sendBtn) {
+            sendBtn.addEventListener('click', sendMessage);
+        }
 
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        if (messageInput) {
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
 
         // Mood selection functionality
         function addMoodEntry(mood, label) {
@@ -1181,13 +1909,12 @@
                 addMoodEntry(mood, moodLabel);
                 
                 // Send mood data to server
-                if (isConnected) {
+                if (isConnected && socket) {
                     socket.emit('mood_update', { mood, userId, label: moodLabel });
                 }
                 
                 // Show confirmation
                 setTimeout(() => {
-                    // Create a nice notification instead of alert
                     showNotification(`Mood "${moodLabel}" recorded! Thank you for sharing. 💙`);
                 }, 500);
             });
@@ -1252,7 +1979,7 @@
                 localStorage.setItem(setting, isActive.toString());
                 
                 // Optional: Send setting to server
-                if (isConnected) {
+                if (isConnected && socket) {
                     socket.emit('settings_update', { 
                         setting, 
                         value: isActive, 
@@ -1276,35 +2003,24 @@
             });
         }
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', () => {
-            updateMoodHistory();
-            loadSettings();
-            
-            // Add welcome message when page loads
-            setTimeout(() => {
-                if (messagesContainer.children.length === 0) {
-                    addMessage('Welcome! I\'m Empatha, your emotional wellness companion. How are you feeling today? 💙', false, 'caring');
-                }
-            }, 1000);
-        });
-
         // Handle page visibility change
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && !isConnected) {
+            if (!document.hidden && !isConnected && authManager.isAuthenticated()) {
                 // Try to reconnect when page becomes visible
-                socket.connect();
+                if (socket) {
+                    socket.connect();
+                }
             }
         });
 
         // Prevent form submission on enter
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target !== messageInput) {
+            if (e.key === 'Enter' && e.target !== messageInput && !e.target.closest('.auth-form')) {
                 e.preventDefault();
             }
         });
 
-        console.log('🚀 Empatha initialized with user ID:', userId);
+        console.log('🚀 Empatha with Authentication initialized');
     </script>
 </body>
 </html>
