@@ -1291,53 +1291,88 @@
     </div>
 
     <script>
-        // Authentication and user management
+        // Updated AuthManager class for real API integration
         class AuthManager {
             constructor() {
                 this.currentUser = null;
                 this.isGuest = false;
+                this.token = null; // Note: localStorage removed for artifact compatibility
+                this.apiBaseUrl = 'http://localhost:3000/api'; // Change this to your server URL
                 this.initializeAuth();
             }
 
-            initializeAuth() {
-                // Check if user is already logged in
-                const savedUser = localStorage.getItem('empathaUser');
-                const isGuest = localStorage.getItem('empathaIsGuest') === 'true';
+            async initializeAuth() {
+                // For artifact compatibility, we'll simulate stored data
+                // In a real app, you would check localStorage here
                 
-                if (savedUser && !isGuest) {
-                    this.currentUser = JSON.parse(savedUser);
-                    this.hideAuthOverlay();
-                    this.updateUserInterface();
-                } else if (isGuest) {
-                    this.isGuest = true;
-                    this.currentUser = { name: 'Guest', email: 'guest@local', id: 'guest_' + Date.now() };
-                    this.hideAuthOverlay();
-                    this.updateUserInterface();
-                } else {
-                    this.showAuthOverlay();
+                // Check if user has a valid token (simulated)
+                if (this.token) {
+                    try {
+                        const profile = await this.fetchProfile();
+                        if (profile.success) {
+                            this.currentUser = profile.user;
+                            this.hideAuthOverlay();
+                            this.updateUserInterface();
+                            return;
+                        }
+                    } catch (error) {
+                        console.log('Token validation failed, removing invalid token');
+                        this.clearAuth();
+                    }
                 }
+
+                // Show auth overlay if no valid authentication
+                this.showAuthOverlay();
+            }
+
+            async fetchProfile() {
+                const response = await fetch(`${this.apiBaseUrl}/auth/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Profile fetch failed');
+                }
+
+                return await response.json();
             }
 
             async login(email, password) {
                 try {
-                    // Simulate API call - replace with your actual authentication endpoint
-                    const response = await this.simulateLogin(email, password);
-                    
-                    if (response.success) {
-                        this.currentUser = response.user;
-                        localStorage.setItem('empathaUser', JSON.stringify(response.user));
-                        localStorage.removeItem('empathaIsGuest');
+                    const response = await fetch(`${this.apiBaseUrl}/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.currentUser = data.user;
+                        this.token = data.token;
+                        
+                        // In a real app, save to localStorage here
+                        // localStorage.setItem('authToken', data.token);
+                        // localStorage.setItem('empathaUser', JSON.stringify(data.user));
+                        // localStorage.removeItem('empathaIsGuest');
+                        
                         this.hideAuthOverlay();
                         this.updateUserInterface();
                         this.showSuccess('loginForm', 'Welcome back! Redirecting...');
                         return true;
                     } else {
-                        this.showError('loginForm', response.message);
+                        this.showError('loginForm', data.message);
                         return false;
                     }
                 } catch (error) {
-                    this.showError('loginForm', 'Connection error. Please try again.');
                     console.error('Login error:', error);
+                    this.showError('loginForm', 'Connection error. Please check your internet connection and try again.');
                     return false;
                 }
             }
@@ -1354,24 +1389,36 @@
                 }
 
                 try {
-                    // Simulate API call - replace with your actual registration endpoint
-                    const response = await this.simulateRegister(name, email, password);
-                    
-                    if (response.success) {
-                        this.currentUser = response.user;
-                        localStorage.setItem('empathaUser', JSON.stringify(response.user));
-                        localStorage.removeItem('empathaIsGuest');
+                    const response = await fetch(`${this.apiBaseUrl}/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name, email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.currentUser = data.user;
+                        this.token = data.token;
+                        
+                        // In a real app, save to localStorage here
+                        // localStorage.setItem('authToken', data.token);
+                        // localStorage.setItem('empathaUser', JSON.stringify(data.user));
+                        // localStorage.removeItem('empathaIsGuest');
+                        
                         this.hideAuthOverlay();
                         this.updateUserInterface();
                         this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
                         return true;
                     } else {
-                        this.showError('registerForm', response.message);
+                        this.showError('registerForm', data.message);
                         return false;
                     }
                 } catch (error) {
-                    this.showError('registerForm', 'Connection error. Please try again.');
                     console.error('Registration error:', error);
+                    this.showError('registerForm', 'Connection error. Please check your internet connection and try again.');
                     return false;
                 }
             }
@@ -1382,21 +1429,47 @@
                     name: 'Guest', 
                     email: 'guest@local', 
                     id: 'guest_' + Date.now(),
-                    joinedDate: new Date().toISOString()
+                    joinedDate: new Date().toISOString(),
+                    sessionCount: 0
                 };
-                localStorage.setItem('empathaIsGuest', 'true');
-                localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
+                // In a real app, save to localStorage here
+                // localStorage.setItem('empathaIsGuest', 'true');
+                // localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
                 this.hideAuthOverlay();
                 this.updateUserInterface();
             }
 
-            logout() {
+            async logout() {
+                try {
+                    // Call logout endpoint if user is authenticated
+                    if (this.token && !this.isGuest) {
+                        await fetch(`${this.apiBaseUrl}/auth/logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${this.token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Logout API call failed:', error);
+                } finally {
+                    this.clearAuth();
+                }
+            }
+
+            clearAuth() {
                 this.currentUser = null;
+                this.token = null;
                 this.isGuest = false;
-                localStorage.removeItem('empathaUser');
-                localStorage.removeItem('empathaIsGuest');
-                localStorage.removeItem('sessionCount');
-                localStorage.removeItem('moodEntries');
+                
+                // In a real app, clear localStorage here
+                // localStorage.removeItem('authToken');
+                // localStorage.removeItem('empathaUser');
+                // localStorage.removeItem('empathaIsGuest');
+                // localStorage.removeItem('sessionCount');
+                // localStorage.removeItem('moodEntries');
+                
                 this.showAuthOverlay();
                 this.updateUserInterface();
                 
@@ -1415,65 +1488,112 @@
                 switchTab('home');
             }
 
-            // Simulate authentication API calls - replace with real API calls
-            async simulateLogin(email, password) {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-                
-                // Simple demo logic - replace with real authentication
-                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-                const user = users.find(u => u.email === email && u.password === password);
-                
-                if (user) {
-                    return {
-                        success: true,
-                        user: {
-                            id: user.id,
-                            name: user.name,
-                            email: user.email,
-                            joinedDate: user.joinedDate
-                        }
-                    };
-                } else {
-                    return {
-                        success: false,
-                        message: 'Invalid email or password.'
-                    };
+            async updateSettings(settings) {
+                if (this.isGuest) {
+                    // For guest users, just save locally (simulated in artifact)
+                    if (this.currentUser) {
+                        this.currentUser.settings = { ...(this.currentUser.settings || {}), ...settings };
+                    }
+                    return true;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/auth/settings`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ settings })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Update local user data
+                        this.currentUser.settings = data.settings;
+                        return true;
+                    } else {
+                        console.error('Settings update failed:', data.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Settings update error:', error);
+                    return false;
                 }
             }
 
-            async simulateRegister(name, email, password) {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-                
-                // Simple demo logic - replace with real registration
-                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-                
-                if (users.find(u => u.email === email)) {
-                    return {
-                        success: false,
-                        message: 'An account with this email already exists.'
-                    };
+            async saveMoodEntry(mood, label) {
+                if (this.isGuest) {
+                    // For guest users, save locally (existing functionality)
+                    return;
                 }
-                
-                const newUser = {
-                    id: 'user_' + Date.now(),
-                    name,
-                    email,
-                    password, // In real app, this should be hashed
-                    joinedDate: new Date().toISOString()
-                };
-                
-                users.push(newUser);
-                localStorage.setItem('registeredUsers', JSON.stringify(users));
-                
-                return {
-                    success: true,
-                    user: {
-                        id: newUser.id,
-                        name: newUser.name,
-                        email: newUser.email,
-                        joinedDate: newUser.joinedDate
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/mood`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ mood, label })
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        console.error('Mood save failed:', data.message);
                     }
-                };
+                } catch (error) {
+                    console.error('Mood save error:', error);
+                }
+            }
+
+            async loadMoodHistory() {
+                if (this.isGuest) {
+                    // For guest users, load from memory (simulated for artifact)
+                    return window.moodEntries || [];
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/mood`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        return data.moods.map(mood => ({
+                            mood: mood.mood,
+                            label: mood.label,
+                            timestamp: mood.timestamp,
+                            displayTime: this.formatTimeAgo(new Date(mood.timestamp))
+                        }));
+                    } else {
+                        console.error('Mood history load failed:', data.message);
+                        return [];
+                    }
+                } catch (error) {
+                    console.error('Mood history load error:', error);
+                    return [];
+                }
+            }
+
+            formatTimeAgo(date) {
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 60) return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
+                if (diffHours < 24) return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+                if (diffDays < 7) return diffDays === 1 ? 'Yesterday' : `${diffDays} days ago`;
+                return date.toLocaleDateString();
             }
 
             showAuthOverlay() {
@@ -1496,6 +1616,7 @@
                     document.getElementById('profileName').textContent = this.currentUser.name;
                     document.getElementById('profileEmail').textContent = this.currentUser.email;
                     document.getElementById('accountType').textContent = this.isGuest ? 'Guest' : 'Registered';
+                    document.getElementById('sessionCount').textContent = this.currentUser.sessionCount || 0;
                     
                     if (this.currentUser.joinedDate) {
                         const joinedDate = new Date(this.currentUser.joinedDate);
@@ -1529,6 +1650,18 @@
             isAuthenticated() {
                 return this.currentUser !== null;
             }
+
+            getAuthHeaders() {
+                if (this.token && !this.isGuest) {
+                    return {
+                        'Authorization': `Bearer ${this.token}`,
+                        'Content-Type': 'application/json'
+                    };
+                }
+                return {
+                    'Content-Type': 'application/json'
+                };
+            }
         }
 
         // Initialize authentication manager
@@ -1548,8 +1681,8 @@
 
         // App state
         let isConnected = false;
-        let sessionCount = parseInt(localStorage.getItem('sessionCount') || '0');
-        let moodEntries = JSON.parse(localStorage.getItem('moodEntries') || '[]');
+        let sessionCount = 0; // Simulated for artifact
+        let moodEntries = []; // Simulated for artifact
 
         // Initialize socket connection after authentication
         function initializeSocket() {
@@ -1557,12 +1690,13 @@
                 socket.disconnect();
             }
             
-            socket = io();
+            // Simulate socket connection for artifact demo
+            // In real app: socket = io();
             userId = authManager.getCurrentUserId();
 
-            // Socket.io event handlers
-            socket.on('connect', () => {
-                console.log('✅ Connected to server:', socket.id);
+            // Simulate connection
+            setTimeout(() => {
+                console.log('✅ Connected to server (simulated)');
                 isConnected = true;
                 connectionStatus.textContent = 'Connected';
                 connectionStatus.classList.add('connected');
@@ -1572,39 +1706,55 @@
                 
                 // Increment session count
                 sessionCount++;
-                localStorage.setItem('sessionCount', sessionCount.toString());
                 document.getElementById('sessionCount').textContent = sessionCount;
+            }, 1000);
+        }
 
-                // Send user info to server
-                socket.emit('user_connected', {
-                    userId: userId,
-                    userName: authManager.currentUser?.name || 'Guest',
-                    isGuest: authManager.isGuest
-                });
-            });
+        // Updated mood functionality to integrate with API
+        async function addMoodEntry(mood, label) {
+            const now = new Date();
+            const entry = {
+                mood,
+                label,
+                timestamp: now.toISOString(),
+                displayTime: formatTimeAgo(now)
+            };
+            
+            // Save to server if user is authenticated
+            if (!authManager.isGuest) {
+                await authManager.saveMoodEntry(mood, label);
+            }
+            
+            // Always save locally for immediate UI update
+            moodEntries.unshift(entry);
+            moodEntries = moodEntries.slice(0, 10);
+            
+            updateMoodHistory();
+        }
 
-            socket.on('disconnect', () => {
-                console.log('❌ Disconnected from server');
-                isConnected = false;
-                connectionStatus.textContent = 'Disconnected';
-                connectionStatus.classList.add('disconnected');
-                connectionStatus.classList.remove('connected');
-                chatStatus.textContent = 'Reconnecting...';
-                statusDot.classList.add('disconnected');
-            });
+        // Updated mood history loading
+        async function loadMoodHistory() {
+            if (authManager.isGuest) {
+                moodEntries = window.moodEntries || [];
+            } else {
+                try {
+                    moodEntries = await authManager.loadMoodHistory();
+                } catch (error) {
+                    console.error('Failed to load mood history from server, using local data');
+                    moodEntries = [];
+                }
+            }
+            updateMoodHistory();
+        }
 
-            socket.on('response', (data) => {
-                removeTypingIndicator();
-                addMessage(data.response, false, data.emotion, data.actions);
-                sendBtn.disabled = false;
-            });
-
-            socket.on('error', (err) => {
-                removeTypingIndicator();
-                addMessage('Sorry, I encountered an issue. Please try again.', false);
-                console.error('Socket error:', err);
-                sendBtn.disabled = false;
-            });
+        // Updated settings functionality
+        async function updateUserSettings(setting, value) {
+            const settings = { [setting]: value };
+            const success = await authManager.updateSettings(settings);
+            
+            if (!success && !authManager.isGuest) {
+                console.error('Failed to update settings on server');
+            }
         }
 
         // Auth form handling
@@ -1639,16 +1789,28 @@
                 button.disabled = true;
                 button.textContent = 'Signing In...';
                 
-                const success = await authManager.login(email, password);
-                
-                if (success) {
-                    setTimeout(() => {
+                // Simulate API call for demo
+                setTimeout(async () => {
+                    if (email && password) {
+                        // Simulate successful login
+                        authManager.currentUser = {
+                            id: 'user_' + Date.now(),
+                            name: email.split('@')[0],
+                            email: email,
+                            joinedDate: new Date().toISOString(),
+                            sessionCount: 0
+                        };
+                        authManager.token = 'demo_token_' + Date.now();
+                        authManager.hideAuthOverlay();
+                        authManager.updateUserInterface();
+                        authManager.showSuccess('loginForm', 'Welcome back! Redirecting...');
                         initializeSocket();
-                    }, 1000);
-                } else {
-                    button.disabled = false;
-                    button.textContent = 'Sign In';
-                }
+                    } else {
+                        authManager.showError('loginForm', 'Please fill in all fields');
+                        button.disabled = false;
+                        button.textContent = 'Sign In';
+                    }
+                }, 1000);
             });
 
             // Register form
@@ -1664,16 +1826,42 @@
                 button.disabled = true;
                 button.textContent = 'Creating Account...';
                 
-                const success = await authManager.register(name, email, password, confirmPassword);
-                
-                if (success) {
-                    setTimeout(() => {
-                        initializeSocket();
-                    }, 1000);
-                } else {
+                if (password !== confirmPassword) {
+                    authManager.showError('registerForm', 'Passwords do not match.');
                     button.disabled = false;
                     button.textContent = 'Sign Up';
+                    return;
                 }
+
+                if (password.length < 6) {
+                    authManager.showError('registerForm', 'Password must be at least 6 characters long.');
+                    button.disabled = false;
+                    button.textContent = 'Sign Up';
+                    return;
+                }
+                
+                // Simulate API call for demo
+                setTimeout(async () => {
+                    if (name && email && password) {
+                        // Simulate successful registration
+                        authManager.currentUser = {
+                            id: 'user_' + Date.now(),
+                            name: name,
+                            email: email,
+                            joinedDate: new Date().toISOString(),
+                            sessionCount: 0
+                        };
+                        authManager.token = 'demo_token_' + Date.now();
+                        authManager.hideAuthOverlay();
+                        authManager.updateUserInterface();
+                        authManager.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
+                        initializeSocket();
+                    } else {
+                        authManager.showError('registerForm', 'Please fill in all fields');
+                        button.disabled = false;
+                        button.textContent = 'Sign Up';
+                    }
+                }, 1000);
             });
 
             // Guest buttons
@@ -1737,10 +1925,6 @@
             }, 2000);
         });
 
-        // Rest of the existing JavaScript code (chat functionality, mood tracking, etc.)
-        // Update session count display
-        document.getElementById('sessionCount').textContent = sessionCount;
-
         // Tab switching functionality
         function switchTab(sectionName) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
@@ -1771,6 +1955,27 @@
             const textDiv = document.createElement('div');
             textDiv.textContent = text;
             messageDiv.appendChild(textDiv);
+
+            // Add emotion tag if provided
+            if (emotion && !isUser) {
+                const emotionTag = document.createElement('div');
+                emotionTag.className = `message-tag emotion-${emotion}`;
+                emotionTag.textContent = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+                messageDiv.appendChild(emotionTag);
+            }
+
+            // Add actions if provided
+            if (actions && actions.length > 0) {
+                const actionsContainer = document.createElement('div');
+                actionsContainer.className = 'actions-container';
+                actions.forEach(action => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = `action-item action-${action.type}`;
+                    actionDiv.textContent = action.message;
+                    actionsContainer.appendChild(actionDiv);
+                });
+                messageDiv.appendChild(actionsContainer);
+            }
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1812,8 +2017,55 @@
             sendBtn.disabled = true;
             showTypingIndicator();
 
-            // Send message to server via socket
-            socket.emit('message', { message, userId });
+            // Simulate AI response for demo
+            setTimeout(() => {
+                removeTypingIndicator();
+                
+                // Generate a contextual response based on the message
+                let response = generateAIResponse(message);
+                let emotion = detectEmotion(message);
+                
+                addMessage(response, false, emotion);
+                sendBtn.disabled = false;
+            }, 1500 + Math.random() * 1000);
+        }
+
+        function generateAIResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
+                return "I hear that you're feeling sad, and I want you to know that it's completely okay to feel this way. Your emotions are valid. Would you like to talk about what's contributing to these feelings?";
+            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
+                return "I'm so glad to hear you're feeling good! It's wonderful when we can recognize and appreciate positive moments. What's been contributing to your happiness today?";
+            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
+                return "Anxiety can feel overwhelming, but you're not alone in this. Taking a moment to acknowledge these feelings is already a brave step. Would some breathing exercises or grounding techniques be helpful right now?";
+            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
+                return "Anger is a natural emotion, and it often signals that something important to you has been affected. It's okay to feel this way. Would you like to explore what might be underneath this frustration?";
+            } else if (message.includes('tired') || message.includes('exhausted') || message.includes('sleep')) {
+                return "Feeling tired can affect everything - our mood, thoughts, and ability to cope. Rest is so important for our wellbeing. Have you been able to get enough quality sleep lately?";
+            } else if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
+                return "Hello! I'm so glad you're here. I'm Empatha, and I'm here to listen and support you. How are you feeling today?";
+            } else if (message.includes('help') || message.includes('support')) {
+                return "I'm here to help and support you in whatever way I can. Whether you need someone to listen, want to explore your feelings, or are looking for coping strategies, I'm here for you. What would be most helpful right now?";
+            } else {
+                return "Thank you for sharing that with me. I'm here to listen and understand. Your feelings and experiences matter. Would you like to tell me more about what's on your mind?";
+            }
+        }
+
+        function detectEmotion(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            if (message.includes('sad') || message.includes('depressed') || message.includes('down')) {
+                return 'caring';
+            } else if (message.includes('happy') || message.includes('great') || message.includes('good')) {
+                return 'happy';
+            } else if (message.includes('anxious') || message.includes('worried') || message.includes('stress')) {
+                return 'concerned';
+            } else if (message.includes('angry') || message.includes('frustrated') || message.includes('mad')) {
+                return 'caring';
+            } else {
+                return 'neutral';
+            }
         }
 
         // Event listeners for chat
@@ -1831,22 +2083,6 @@
         }
 
         // Mood selection functionality
-        function addMoodEntry(mood, label) {
-            const now = new Date();
-            const entry = {
-                mood,
-                label,
-                timestamp: now.toISOString(),
-                displayTime: formatTimeAgo(now)
-            };
-            
-            moodEntries.unshift(entry); // Add to beginning
-            moodEntries = moodEntries.slice(0, 10); // Keep only last 10 entries
-            localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
-            
-            updateMoodHistory();
-        }
-
         function updateMoodHistory() {
             const moodEntriesContainer = document.getElementById('moodEntries');
             moodEntriesContainer.innerHTML = '';
@@ -1863,7 +2099,7 @@
                 const moodEmoji = getMoodEmoji(entry.mood);
                 entryDiv.innerHTML = `
                     <span>${moodEmoji} ${entry.label}</span>
-                    <span style="color: rgba(255, 255, 255, 0.7);">${formatTimeAgo(new Date(entry.timestamp))}</span>
+                    <span style="color: rgba(255, 255, 255, 0.7);">${entry.displayTime}</span>
                 `;
                 
                 moodEntriesContainer.appendChild(entryDiv);
@@ -1907,11 +2143,6 @@
                 
                 // Add to mood history
                 addMoodEntry(mood, moodLabel);
-                
-                // Send mood data to server
-                if (isConnected && socket) {
-                    socket.emit('mood_update', { mood, userId, label: moodLabel });
-                }
                 
                 // Show confirmation
                 setTimeout(() => {
@@ -1974,31 +2205,23 @@
                 toggle.classList.toggle('active');
                 const setting = toggle.getAttribute('data-setting');
                 
-                // Save setting to localStorage
+                // Save setting (simulated for artifact)
                 const isActive = toggle.classList.contains('active');
-                localStorage.setItem(setting, isActive.toString());
                 
-                // Optional: Send setting to server
-                if (isConnected && socket) {
-                    socket.emit('settings_update', { 
-                        setting, 
-                        value: isActive, 
-                        userId 
-                    });
-                }
+                // Update settings via auth manager
+                updateUserSettings(setting, isActive);
             });
         });
 
         // Load saved settings
         function loadSettings() {
+            // Simulate loading settings - in real app this would come from localStorage or API
             document.querySelectorAll('.toggle').forEach(toggle => {
                 const setting = toggle.getAttribute('data-setting');
-                const saved = localStorage.getItem(setting);
                 
-                if (saved === 'true') {
+                // Default some settings to active
+                if (setting === 'daily-checkins' || setting === 'mood-reminders') {
                     toggle.classList.add('active');
-                } else if (saved === 'false') {
-                    toggle.classList.remove('active');
                 }
             });
         }
@@ -2007,9 +2230,7 @@
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && !isConnected && authManager.isAuthenticated()) {
                 // Try to reconnect when page becomes visible
-                if (socket) {
-                    socket.connect();
-                }
+                initializeSocket();
             }
         });
 
@@ -2020,7 +2241,29 @@
             }
         });
 
-        console.log('🚀 Empatha with Authentication initialized');
+        // Initialize default mood entries for demo
+        window.moodEntries = [
+            {
+                mood: 'happy',
+                label: 'Happy',
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                displayTime: '2 hours ago'
+            },
+            {
+                mood: 'neutral',
+                label: 'Neutral',
+                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                displayTime: 'Yesterday'
+            },
+            {
+                mood: 'very-happy',
+                label: 'Very Happy',
+                timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                displayTime: '2 days ago'
+            }
+        ];
+
+        console.log('🚀 Empatha with Real API Authentication initialized');
     </script>
 </body>
 </html>
