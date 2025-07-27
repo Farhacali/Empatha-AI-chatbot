@@ -1292,18 +1292,16 @@
 
     <script>
         // Updated AuthManager class for real API integration
-        class AuthManager {
-            constructor() {
-                this.currentUser = null;
-                this.isGuest = false;
-                // REAL localStorage integration - uncomment for production
-                this.token = localStorage.getItem('authToken');
-                this.apiBaseUrl = process.env.NODE_ENV === 'production' 
-                    ? 'https://your-domain.com/api' 
-                    : 'http://localhost:3000/api'; // Change this to your server URL
-                this.initializeAuth();
-            }
-
+       class AuthManager {
+        constructor() {
+        this.currentUser = null;
+        this.isGuest = false;
+        this.token = localStorage.getItem('authToken');
+        this.apiBaseUrl = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000/api'
+            : 'https://empatha-ai-chatbot.onrender.com/api'; // Your deployed backend
+        this.initializeAuth();
+    }
             async initializeAuth() {
                 // Check if user has a valid token
                 if (this.token) {
