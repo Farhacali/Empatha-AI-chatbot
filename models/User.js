@@ -1,29 +1,18 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  profile: {
-    age: Number,
-    medicalConditions: [String],
-    medications: [{
-      name: String,
-      dosage: String,
-      frequency: String,
-      times: [String]
-    }],
-    emergencyContacts: [{
-      name: String,
-      phone: String,
-      relationship: String
-    }],
-    preferences: {
-      language: String,
-      reminderStyle: String,
-      communicationStyle: String
-    }
+  name: { type: String, required: true, trim: true, minlength: 2, maxlength: 50 },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true, minlength: 6 },
+  joinedDate: { type: Date, default: Date.now },
+  settings: {
+    dailyCheckins: { type: Boolean, default: true },
+    moodReminders: { type: Boolean, default: true },
+    weeklyReports: { type: Boolean, default: false },
+    anonymousMode: { type: Boolean, default: false }
   },
-  createdAt: { type: Date, default: Date.now }
+  sessionCount: { type: Number, default: 0 },
+  lastActive: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);
