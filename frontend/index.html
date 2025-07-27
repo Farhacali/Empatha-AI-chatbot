@@ -934,6 +934,16 @@
             }
         }
 
+        /* Notification animations */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header {
@@ -1003,12 +1013,12 @@
                 
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required>
+                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required maxlength="100" autocomplete="email">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-input" name="password" placeholder="Enter your password" required>
+                    <input type="password" class="form-input" name="password" placeholder="Enter your password" required maxlength="100" autocomplete="current-password">
                 </div>
                 
                 <button type="submit" class="auth-button">Sign In</button>
@@ -1021,22 +1031,22 @@
                 
                 <div class="form-group">
                     <label class="form-label">Full Name</label>
-                    <input type="text" class="form-input" name="name" placeholder="Enter your full name" required>
+                    <input type="text" class="form-input" name="name" placeholder="Enter your full name" required minlength="2" maxlength="50">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required>
+                    <input type="email" class="form-input" name="email" placeholder="Enter your email" required maxlength="100" autocomplete="email">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-input" name="password" placeholder="Create a password" required minlength="6">
+                    <input type="password" class="form-input" name="password" placeholder="Create a password (min 6 characters)" required minlength="6" maxlength="100" autocomplete="new-password">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
-                    <input type="password" class="form-input" name="confirmPassword" placeholder="Confirm your password" required>
+                    <input type="password" class="form-input" name="confirmPassword" placeholder="Confirm your password" required maxlength="100" autocomplete="new-password">
                 </div>
                 
                 <button type="submit" class="auth-button">Sign Up</button>
@@ -1291,19 +1301,19 @@
     </div>
 
     <script>
-        // Updated AuthManager class for real API integration
-       class AuthManager {
-        constructor() {
-        this.currentUser = null;
-        this.isGuest = false;
-        this.token = localStorage.getItem('authToken');
-        this.apiBaseUrl = window.location.hostname === 'localhost'
-            ? 'http://localhost:3000/api'
-            : 'https://empatha-ai-chatbot.onrender.com/api'; // Your deployed backend
-        this.initializeAuth();
-    }
+        // AuthManager class with all improvements
+        class AuthManager {
+            constructor() {
+                this.currentUser = null;
+                this.isGuest = false;
+                this.token = localStorage.getItem('authToken');
+                this.apiBaseUrl = window.location.hostname === 'localhost'
+                    ? 'http://localhost:3000/api'
+                    : 'https://empatha-ai-chatbot.onrender.com/api';
+                this.initializeAuth();
+            }
+
             async initializeAuth() {
-                // Check if user has a valid token
                 if (this.token) {
                     try {
                         const profile = await this.fetchProfile();
@@ -1319,7 +1329,6 @@
                     }
                 }
 
-                // Check if user is in guest mode
                 const isGuest = localStorage.getItem('empathaIsGuest') === 'true';
                 if (isGuest) {
                     const savedUser = localStorage.getItem('empathaUser');
@@ -1332,11 +1341,14 @@
                     }
                 }
 
-                // Show auth overlay if no valid authentication
                 this.showAuthOverlay();
             }
 
             async fetchProfile() {
+                if (!this.token) {
+                    throw new Error('No token available');
+                }
+
                 const response = await fetch(`${this.apiBaseUrl}/user/profile`, {
                     method: 'GET',
                     headers: {
@@ -1346,6 +1358,10 @@
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        this.clearAuth();
+                        throw new Error('Invalid token');
+                    }
                     throw new Error('Profile fetch failed');
                 }
 
@@ -1355,9 +1371,14 @@
             async login(email, password) {
                 console.log('AuthManager.login called with:', email);
                 
-                // Basic validation
                 if (!email || !password) {
                     this.showError('loginForm', 'Please fill in all fields.');
+                    return false;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showError('loginForm', 'Please enter a valid email address.');
                     return false;
                 }
 
@@ -1369,18 +1390,34 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({ 
+                            email: email.trim(),
+                            password: password 
+                        })
                     });
 
                     console.log('Login response status:', response.status);
-                    const data = await response.json();
+                    
+                    if (response.status === 0) {
+                        this.showError('loginForm', 'Cannot connect to server. Please check your internet connection.');
+                        return false;
+                    }
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('Failed to parse response:', parseError);
+                        this.showError('loginForm', 'Server error. Please try again later.');
+                        return false;
+                    }
+
                     console.log('Login response data:', data);
 
-                    if (data.success) {
+                    if (response.ok && data.success) {
                         this.currentUser = data.user;
                         this.token = data.token;
                         
-                        // Save to localStorage
                         localStorage.setItem('authToken', data.token);
                         localStorage.setItem('empathaUser', JSON.stringify(data.user));
                         localStorage.removeItem('empathaIsGuest');
@@ -1390,17 +1427,26 @@
                         this.showSuccess('loginForm', 'Welcome back! Redirecting...');
                         return true;
                     } else {
-                        this.showError('loginForm', data.message || 'Login failed');
+                        if (response.status === 400) {
+                            this.showError('loginForm', data.message || 'Invalid email or password.');
+                        } else if (response.status === 401) {
+                            this.showError('loginForm', 'Invalid credentials. Please check your email and password.');
+                        } else if (response.status === 500) {
+                            this.showError('loginForm', 'Server error. Please try again later.');
+                        } else {
+                            this.showError('loginForm', data.message || 'Login failed. Please try again.');
+                        }
                         return false;
                     }
                 } catch (error) {
                     console.error('Login error:', error);
                     
-                    // Check if it's a network error
                     if (error.name === 'TypeError' && error.message.includes('fetch')) {
                         this.showError('loginForm', 'Cannot connect to server. Please check if the backend is running.');
+                    } else if (error.name === 'NetworkError' || error.code === 'NETWORK_ERR') {
+                        this.showError('loginForm', 'Network error. Please check your internet connection.');
                     } else {
-                        this.showError('loginForm', 'Connection error. Please check your internet connection and try again.');
+                        this.showError('loginForm', 'Connection error. Please try again later.');
                     }
                     return false;
                 }
@@ -1409,9 +1455,14 @@
             async register(name, email, password, confirmPassword) {
                 console.log('AuthManager.register called with:', name, email);
                 
-                // Basic validation
                 if (!name || !email || !password || !confirmPassword) {
                     this.showError('registerForm', 'Please fill in all fields.');
+                    return false;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showError('registerForm', 'Please enter a valid email address.');
                     return false;
                 }
 
@@ -1425,6 +1476,11 @@
                     return false;
                 }
 
+                if (name.trim().length < 2) {
+                    this.showError('registerForm', 'Name must be at least 2 characters long.');
+                    return false;
+                }
+
                 try {
                     console.log('Making register request to:', `${this.apiBaseUrl}/user/register`);
                     
@@ -1433,18 +1489,35 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ name, email, password })
+                        body: JSON.stringify({ 
+                            name: name.trim(),
+                            email: email.trim().toLowerCase(),
+                            password: password 
+                        })
                     });
 
                     console.log('Register response status:', response.status);
-                    const data = await response.json();
+                    
+                    if (response.status === 0) {
+                        this.showError('registerForm', 'Cannot connect to server. Please check your internet connection.');
+                        return false;
+                    }
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseError) {
+                        console.error('Failed to parse response:', parseError);
+                        this.showError('registerForm', 'Server error. Please try again later.');
+                        return false;
+                    }
+
                     console.log('Register response data:', data);
 
-                    if (data.success) {
+                    if (response.ok && data.success) {
                         this.currentUser = data.user;
                         this.token = data.token;
                         
-                        // Save to localStorage
                         localStorage.setItem('authToken', data.token);
                         localStorage.setItem('empathaUser', JSON.stringify(data.user));
                         localStorage.removeItem('empathaIsGuest');
@@ -1454,17 +1527,32 @@
                         this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
                         return true;
                     } else {
-                        this.showError('registerForm', data.message || 'Registration failed');
+                        if (response.status === 400) {
+                            if (data.error && data.error.includes('duplicate key') || data.message?.includes('already exists')) {
+                                this.showError('registerForm', 'An account with this email already exists. Please try logging in instead.');
+                            } else if (data.error && data.error.includes('validation failed')) {
+                                this.showError('registerForm', 'Please check that all fields are filled correctly.');
+                            } else {
+                                this.showError('registerForm', data.message || 'Registration failed. Please check your information.');
+                            }
+                        } else if (response.status === 409) {
+                            this.showError('registerForm', 'An account with this email already exists. Please try logging in.');
+                        } else if (response.status === 500) {
+                            this.showError('registerForm', 'Server error. Please try again later.');
+                        } else {
+                            this.showError('registerForm', data.message || 'Registration failed. Please try again.');
+                        }
                         return false;
                     }
                 } catch (error) {
                     console.error('Registration error:', error);
                     
-                    // Check if it's a network error
                     if (error.name === 'TypeError' && error.message.includes('fetch')) {
                         this.showError('registerForm', 'Cannot connect to server. Please check if the backend is running.');
+                    } else if (error.name === 'NetworkError' || error.code === 'NETWORK_ERR') {
+                        this.showError('registerForm', 'Network error. Please check your internet connection.');
                     } else {
-                        this.showError('registerForm', 'Connection error. Please check your internet connection and try again.');
+                        this.showError('registerForm', 'Connection error. Please try again later.');
                     }
                     return false;
                 }
@@ -1480,21 +1568,18 @@
                     joinedDate: new Date().toISOString(),
                     sessionCount: 0
                 };
-                // Save to localStorage
                 localStorage.setItem('empathaIsGuest', 'true');
                 localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
                 
                 this.hideAuthOverlay();
                 this.updateUserInterface();
                 
-                // Show a message about guest mode
                 setTimeout(() => {
                     this.showNotification('Welcome! You\'re using guest mode. Your data will be saved locally.');
                 }, 1000);
             }
 
             showNotification(message) {
-                // Create notification element
                 const notification = document.createElement('div');
                 notification.style.cssText = `
                     position: fixed;
@@ -1513,7 +1598,6 @@
                 
                 document.body.appendChild(notification);
                 
-                // Remove after 4 seconds
                 setTimeout(() => {
                     if (notification.parentNode) {
                         notification.style.animation = 'slideOutRight 0.3s ease';
@@ -1528,7 +1612,6 @@
 
             async logout() {
                 try {
-                    // Call logout endpoint if user is authenticated
                     if (this.token && !this.isGuest) {
                         await fetch(`${this.apiBaseUrl}/user/logout`, {
                             method: 'POST',
@@ -1550,7 +1633,6 @@
                 this.token = null;
                 this.isGuest = false;
                 
-                // Clear localStorage
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('empathaUser');
                 localStorage.removeItem('empathaIsGuest');
@@ -1560,24 +1642,20 @@
                 this.showAuthOverlay();
                 this.updateUserInterface();
                 
-                // Reset app state
                 if (window.socket && window.socket.connected) {
                     window.socket.disconnect();
                 }
                 
-                // Clear messages
                 const messagesContainer = document.getElementById('messages');
                 if (messagesContainer) {
                     messagesContainer.innerHTML = '';
                 }
                 
-                // Switch to home tab
                 switchTab('home');
             }
 
             async updateSettings(settings) {
                 if (this.isGuest) {
-                    // For guest users, just save locally
                     const user = JSON.parse(localStorage.getItem('empathaUser'));
                     user.settings = { ...(user.settings || {}), ...settings };
                     localStorage.setItem('empathaUser', JSON.stringify(user));
@@ -1598,7 +1676,6 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // Update local user data
                         this.currentUser.settings = data.settings;
                         localStorage.setItem('empathaUser', JSON.stringify(this.currentUser));
                         return true;
@@ -1614,7 +1691,10 @@
 
             async saveMoodEntry(mood, label) {
                 if (this.isGuest) {
-                    // For guest users, save locally (existing functionality)
+                    return;
+                }
+
+                if (!this.token) {
                     return;
                 }
 
@@ -1628,6 +1708,14 @@
                         body: JSON.stringify({ mood, label })
                     });
 
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            console.log('Unauthorized access to save mood');
+                            return;
+                        }
+                        throw new Error('Failed to save mood');
+                    }
+
                     const data = await response.json();
 
                     if (!data.success) {
@@ -1640,8 +1728,11 @@
 
             async loadMoodHistory() {
                 if (this.isGuest) {
-                    // For guest users, load from localStorage (existing functionality)
                     return JSON.parse(localStorage.getItem('moodEntries') || '[]');
+                }
+
+                if (!this.token) {
+                    return [];
                 }
 
                 try {
@@ -1652,6 +1743,14 @@
                             'Content-Type': 'application/json'
                         }
                     });
+
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            console.log('Unauthorized access to mood data');
+                            return [];
+                        }
+                        throw new Error('Failed to load mood history');
+                    }
 
                     const data = await response.json();
 
@@ -1701,7 +1800,6 @@
                     userMenu.classList.add('visible');
                     userAvatar.textContent = this.currentUser.name.charAt(0).toUpperCase();
                     
-                    // Update profile information
                     document.getElementById('profileName').textContent = this.currentUser.name;
                     document.getElementById('profileEmail').textContent = this.currentUser.email;
                     document.getElementById('accountType').textContent = this.isGuest ? 'Guest' : 'Registered';
@@ -1722,6 +1820,12 @@
                     document.getElementById('registerMessage');
                 
                 messageElement.innerHTML = `<div class="auth-error">${message}</div>`;
+                
+                setTimeout(() => {
+                    if (messageElement.innerHTML.includes('auth-error')) {
+                        messageElement.innerHTML = '';
+                    }
+                }, 10000);
             }
 
             showSuccess(formId, message) {
@@ -1730,6 +1834,12 @@
                     document.getElementById('registerMessage');
                 
                 messageElement.innerHTML = `<div class="auth-success">${message}</div>`;
+                
+                setTimeout(() => {
+                    if (messageElement.innerHTML.includes('auth-success')) {
+                        messageElement.innerHTML = '';
+                    }
+                }, 5000);
             }
 
             getCurrentUserId() {
@@ -1750,6 +1860,57 @@
                 return {
                     'Content-Type': 'application/json'
                 };
+            }
+        }
+
+        // Real-time form validation
+        function setupFormValidation() {
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                input.addEventListener('blur', () => {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (input.value && !emailRegex.test(input.value)) {
+                        input.style.borderColor = '#ef4444';
+                    } else {
+                        input.style.borderColor = '';
+                    }
+                });
+            });
+
+            const nameInput = document.querySelector('input[name="name"]');
+            if (nameInput) {
+                nameInput.addEventListener('blur', () => {
+                    if (nameInput.value && nameInput.value.trim().length < 2) {
+                        nameInput.style.borderColor = '#ef4444';
+                    } else {
+                        nameInput.style.borderColor = '';
+                    }
+                });
+            }
+
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+            passwordInputs.forEach(input => {
+                if (input.name === 'password') {
+                    input.addEventListener('input', () => {
+                        if (input.value && input.value.length < 6) {
+                            input.style.borderColor = '#ef4444';
+                        } else {
+                            input.style.borderColor = '';
+                        }
+                    });
+                }
+            });
+
+            const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', () => {
+                    const passwordInput = document.querySelector('input[name="password"]');
+                    if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+                        confirmPasswordInput.style.borderColor = '#ef4444';
+                    } else {
+                        confirmPasswordInput.style.borderColor = '';
+                    }
+                });
             }
         }
 
@@ -1782,34 +1943,28 @@
             }
             
             try {
-                // Real Socket.io connection
-                socket = io();
+                socket = io({
+                    timeout: 10000,
+                    forceNew: true
+                });
                 userId = authManager.getCurrentUserId();
                 console.log('Socket created for user:', userId);
 
-                // Connection timeout
                 const connectionTimeout = setTimeout(() => {
                     console.log('Socket connection timeout - falling back to demo mode');
                     handleSocketFallback();
-                }, 5000);
+                }, 10000);
 
-                // Real Socket.io event handlers
                 socket.on('connect', () => {
                     clearTimeout(connectionTimeout);
                     console.log('✅ Connected to server:', socket.id);
                     isConnected = true;
-                    connectionStatus.textContent = 'Connected';
-                    connectionStatus.classList.add('connected');
-                    connectionStatus.classList.remove('disconnected');
-                    chatStatus.textContent = 'Online and ready to help';
-                    statusDot.classList.remove('disconnected');
+                    updateConnectionStatus('connected', 'Connected to AI server');
                     
-                    // Increment session count
                     sessionCount++;
                     localStorage.setItem('sessionCount', sessionCount.toString());
                     document.getElementById('sessionCount').textContent = sessionCount;
 
-                    // Send user info to server
                     socket.emit('user_connected', {
                         userId: userId,
                         userName: authManager.currentUser?.name || 'Guest',
@@ -1823,14 +1978,17 @@
                     handleSocketFallback();
                 });
 
-                socket.on('disconnect', () => {
-                    console.log('❌ Disconnected from server');
+                socket.on('disconnect', (reason) => {
+                    console.log('❌ Disconnected from server:', reason);
                     isConnected = false;
-                    connectionStatus.textContent = 'Disconnected';
-                    connectionStatus.classList.add('disconnected');
-                    connectionStatus.classList.remove('connected');
-                    chatStatus.textContent = 'Reconnecting...';
-                    statusDot.classList.add('disconnected');
+                    updateConnectionStatus('disconnected', 'Reconnecting...');
+                    
+                    setTimeout(() => {
+                        if (authManager.isAuthenticated() && (!socket || !socket.connected)) {
+                            console.log('Attempting to reconnect...');
+                            initializeSocket();
+                        }
+                    }, 3000);
                 });
 
                 socket.on('response', (data) => {
@@ -1852,24 +2010,38 @@
             }
         }
 
+        // Update connection status UI
+        function updateConnectionStatus(status, message) {
+            const connectionStatus = document.querySelector('.connection-status');
+            const statusDot = document.getElementById('statusDot');
+            const chatStatus = document.getElementById('chatStatus');
+
+            connectionStatus.textContent = message;
+            chatStatus.textContent = status === 'connected' ? 'Online and ready to help' : message;
+            
+            if (status === 'connected') {
+                connectionStatus.classList.add('connected');
+                connectionStatus.classList.remove('disconnected');
+                statusDot.classList.remove('disconnected');
+            } else {
+                connectionStatus.classList.add('disconnected');
+                connectionStatus.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+            }
+        }
+
         // Fallback to demo mode if socket connection fails
         function handleSocketFallback() {
             console.log('Falling back to demo mode');
-            isConnected = true; // Set to true for demo mode
-            connectionStatus.textContent = 'Demo Mode';
-            connectionStatus.classList.add('connected');
-            connectionStatus.classList.remove('disconnected');
-            chatStatus.textContent = 'Demo mode - responses are simulated';
-            statusDot.classList.remove('disconnected');
+            isConnected = true;
+            updateConnectionStatus('demo', 'Demo Mode - Server Unavailable');
             
-            // Increment session count
             sessionCount++;
             localStorage.setItem('sessionCount', sessionCount.toString());
             document.getElementById('sessionCount').textContent = sessionCount;
             
-            // Show notification about demo mode
             setTimeout(() => {
-                showNotification('Running in demo mode. Backend server not available.');
+                showNotification('⚠️ Running in demo mode. Backend server is not available.');
             }, 1000);
         }
 
@@ -1883,12 +2055,10 @@
                 displayTime: formatTimeAgo(now)
             };
             
-            // Save to server if user is authenticated
             if (!authManager.isGuest) {
                 await authManager.saveMoodEntry(mood, label);
             }
             
-            // Always save locally for immediate UI update
             moodEntries.unshift(entry);
             moodEntries = moodEntries.slice(0, 10);
             localStorage.setItem('moodEntries', JSON.stringify(moodEntries));
@@ -1928,21 +2098,17 @@
 
             console.log('Sending message:', message);
 
-            // Add user message to chat
             addMessage(message, true);
             messageInput.value = '';
 
-            // Disable send button and show typing indicator
             sendBtn.disabled = true;
             showTypingIndicator();
 
-            // Send message to server via socket or use demo mode
             if (socket && socket.connected) {
                 console.log('Sending via socket');
                 socket.emit('message', { message, userId });
             } else {
                 console.log('Using demo mode response');
-                // Demo mode - simulate AI response
                 setTimeout(() => {
                     removeTypingIndicator();
                     
@@ -1955,7 +2121,7 @@
             }
         }
 
-        // Demo AI response generation (fallback when backend is not available)
+        // Demo AI response generation
         function generateDemoAIResponse(userMessage) {
             const message = userMessage.toLowerCase();
             
@@ -1998,27 +2164,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM Content Loaded - Setting up auth handlers');
             
-            // Auth tab switching
+            setupFormValidation();
+            
             document.querySelectorAll('[data-auth-tab]').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     console.log('Tab clicked:', tab.getAttribute('data-auth-tab'));
                     const tabName = tab.getAttribute('data-auth-tab');
                     
-                    // Update tab appearance
                     document.querySelectorAll('[data-auth-tab]').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
                     
-                    // Update form visibility
                     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
                     document.getElementById(tabName + 'Form').classList.add('active');
                     
-                    // Clear messages
                     document.getElementById('authMessage').innerHTML = '';
                     document.getElementById('registerMessage').innerHTML = '';
                 });
             });
 
-            // Real login form handler
             const loginForm = document.getElementById('loginForm');
             if (loginForm) {
                 loginForm.addEventListener('submit', async (e) => {
@@ -2037,7 +2200,6 @@
                     button.textContent = 'Signing In...';
                     
                     try {
-                        // Real API call
                         const success = await authManager.login(email, password);
                         
                         if (success) {
@@ -2059,7 +2221,6 @@
                 });
             }
 
-            // Real register form handler
             const registerForm = document.getElementById('registerForm');
             if (registerForm) {
                 registerForm.addEventListener('submit', async (e) => {
@@ -2080,7 +2241,6 @@
                     button.textContent = 'Creating Account...';
                     
                     try {
-                        // Real API call
                         const success = await authManager.register(name, email, password, confirmPassword);
                         
                         if (success) {
@@ -2102,7 +2262,6 @@
                 });
             }
 
-            // Guest buttons - both login and register forms
             const guestButtons = [
                 document.getElementById('guestButton'),
                 document.getElementById('guestButtonRegister')
@@ -2119,19 +2278,16 @@
                 }
             });
 
-            // User menu functionality
             document.getElementById('userAvatar').addEventListener('click', (e) => {
                 e.stopPropagation();
                 const dropdown = document.getElementById('userDropdown');
                 dropdown.classList.toggle('show');
             });
 
-            // Close dropdown when clicking outside
             document.addEventListener('click', () => {
                 document.getElementById('userDropdown').classList.remove('show');
             });
 
-            // User menu items
             document.getElementById('profileMenuItem').addEventListener('click', () => {
                 switchTab('profile');
                 document.getElementById('userDropdown').classList.remove('show');
@@ -2147,17 +2303,14 @@
                 document.getElementById('userDropdown').classList.remove('show');
             });
 
-            // Initialize socket if user is already authenticated
             if (authManager.isAuthenticated()) {
                 initializeSocket();
             }
 
-            // Update session count display
             document.getElementById('sessionCount').textContent = sessionCount;
             loadMoodHistory();
             loadSettings();
             
-            // Add welcome message when page loads
             setTimeout(() => {
                 if (authManager.isAuthenticated() && messagesContainer.children.length === 0) {
                     const userName = authManager.currentUser.name;
@@ -2177,7 +2330,6 @@
             document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
             document.getElementById(sectionName).classList.add('active');
 
-            // Focus on message input when chat tab is selected
             if (sectionName === 'chat') {
                 setTimeout(() => messageInput.focus(), 100);
             }
@@ -2200,7 +2352,6 @@
             textDiv.textContent = text;
             messageDiv.appendChild(textDiv);
 
-            // Add emotion tag if provided
             if (emotion && !isUser) {
                 const emotionTag = document.createElement('div');
                 emotionTag.className = `message-tag emotion-${emotion}`;
@@ -2208,7 +2359,6 @@
                 messageDiv.appendChild(emotionTag);
             }
 
-            // Add actions if provided
             if (actions && actions.length > 0) {
                 const actionsContainer = document.createElement('div');
                 actionsContainer.className = 'actions-container';
@@ -2313,19 +2463,14 @@
 
         document.querySelectorAll('.mood-option').forEach(option => {
             option.addEventListener('click', () => {
-                // Remove selected class from all options
                 document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
-                // Add selected class to clicked option
                 option.classList.add('selected');
                 
-                // Get mood data
                 const mood = option.getAttribute('data-mood');
                 const moodLabel = option.querySelector('.mood-label').textContent;
                 
-                // Add to mood history
                 addMoodEntry(mood, moodLabel);
                 
-                // Show confirmation
                 setTimeout(() => {
                     showNotification(`Mood "${moodLabel}" recorded! Thank you for sharing. 💙`);
                 }, 500);
@@ -2333,7 +2478,6 @@
         });
 
         function showNotification(message) {
-            // Create notification element
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed;
@@ -2350,26 +2494,8 @@
             `;
             notification.textContent = message;
             
-            // Add animation keyframes
-            if (!document.getElementById('notification-styles')) {
-                const style = document.createElement('style');
-                style.id = 'notification-styles';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOutRight {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
             document.body.appendChild(notification);
             
-            // Remove after 3 seconds
             setTimeout(() => {
                 notification.style.animation = 'slideOutRight 0.3s ease';
                 setTimeout(() => {
@@ -2386,23 +2512,18 @@
                 toggle.classList.toggle('active');
                 const setting = toggle.getAttribute('data-setting');
                 
-                // Save setting
                 const isActive = toggle.classList.contains('active');
-                
-                // Update settings via auth manager
                 updateUserSettings(setting, isActive);
             });
         });
 
         // Load saved settings
         function loadSettings() {
-            // Load settings from localStorage or use defaults
             const savedSettings = authManager.currentUser?.settings || {};
             
             document.querySelectorAll('.toggle').forEach(toggle => {
                 const setting = toggle.getAttribute('data-setting');
                 
-                // Check if setting is saved, otherwise use default
                 const isActive = savedSettings[setting] !== undefined ? 
                     savedSettings[setting] : 
                     (setting === 'daily-checkins' || setting === 'mood-reminders');
@@ -2418,7 +2539,6 @@
         // Handle page visibility change
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && !isConnected && authManager.isAuthenticated()) {
-                // Try to reconnect when page becomes visible
                 initializeSocket();
             }
         });
