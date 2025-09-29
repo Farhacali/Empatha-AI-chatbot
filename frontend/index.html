@@ -1514,18 +1514,20 @@
 
                     console.log('Register response data:', data);
 
-                    if (response.ok && data.success) {
-                        this.currentUser = data.user;
-                        this.token = data.token;
-                        
-                        localStorage.setItem('authToken', data.token);
-                        localStorage.setItem('empathaUser', JSON.stringify(data.user));
-                        localStorage.removeItem('empathaIsGuest');
-                        
-                        this.hideAuthOverlay();
-                        this.updateUserInterface();
-                        this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
-                        return true;
+                    if (response.ok && data.token) 
+    this.currentUser = data.user;
+    this.token = data.token;
+    
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('empathaUser', JSON.stringify(data.user));
+    localStorage.removeItem('empathaIsGuest');
+    
+    this.hideAuthOverlay();
+    this.updateUserInterface();
+    this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
+    return true;
+}
+
                     } else {
                         if (response.status === 400) {
                             if (data.error && data.error.includes('duplicate key') || data.message?.includes('already exists')) {
@@ -2554,3 +2556,4 @@
     </script>
 </body>
 </html>
+
