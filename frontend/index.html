@@ -1514,19 +1514,19 @@
 
                     console.log('Register response data:', data);
 
-                    if (response.ok && data.token) 
-    this.currentUser = data.user;
-    this.token = data.token;
+                    if (response.ok && data.token) {
+                        this.currentUser = data.user;
+                        this.token = data.token;
     
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('empathaUser', JSON.stringify(data.user));
-    localStorage.removeItem('empathaIsGuest');
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('empathaUser', JSON.stringify(data.user));
+                        localStorage.removeItem('empathaIsGuest');
     
-    this.hideAuthOverlay();
-    this.updateUserInterface();
-    this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
-    return true;
-}
+                        this.hideAuthOverlay();
+                        this.updateUserInterface();
+                        this.showSuccess('registerForm', 'Account created! Welcome to Empatha...');
+                        return true;
+                   
 
                     } else {
                         if (response.status === 400) {
@@ -2556,4 +2556,5 @@
     </script>
 </body>
 </html>
+
 
