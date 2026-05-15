@@ -238,7 +238,7 @@ All datetime values must be ISO 8601 format.`.trim();
         temperature: 0.5,
         max_tokens: 500
       };
-      
+
       if (formatAsJson) {
         payload.response_format = { type: 'json_object' };
       }
@@ -262,4 +262,3 @@ All datetime values must be ISO 8601 format.`.trim();
 }
 
 module.exports = AIAgent;
-
