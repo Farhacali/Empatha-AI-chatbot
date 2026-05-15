@@ -1,4 +1,7 @@
-const axios = require('axios');
+
+     
+
+ const axios = require('axios');
 const UserModel = require('../models/User');
 const ConversationModel = require('../models/Conversation');
 const ReminderService = require('./ReminderService');
@@ -14,12 +17,12 @@ class AIAgent {
 
   initializeTools() {
     return {
-      setReminder: ReminderService.setReminder,
-      checkHealth: HealthService.checkVitals.bind(HealthService), // ✅ Prevents "undefined.getHeartRate" error
-      emergencyAlert: EmergencyService.triggerAlert,
-      getWeather: this.getWeather.bind(this), // ✅ Will fallback to user profile location if missing
+      setReminder: ReminderService.setReminder.bind(ReminderService),
+      checkHealth: HealthService.checkVitals.bind(HealthService),
+      emergencyAlert: EmergencyService.triggerAlert.bind(EmergencyService),
+      getWeather: this.getWeather.bind(this),
       scheduleMedication: this.scheduleMedication.bind(this),
-      setPillReminder: ReminderService.setMedicationReminder,
+      setPillReminder: ReminderService.setMedicationReminder.bind(ReminderService),
       scheduleDoctor: async (params, user) => {
         return ReminderService.setReminder({
           description: 'Doctor appointment',
@@ -38,13 +41,11 @@ class AIAgent {
       console.log('✅ User found:', user.name);
 
       const trimmedMsg = message.trim().toLowerCase();
-
       if (['start new conversation', 'reset'].includes(trimmedMsg)) {
         this.memory.set(userId, []);
         await ConversationModel.deleteMany({ userId });
-
         return {
-          response: '🧼 Alright! We’re starting a new conversation now.',
+          response: '🧼 Starting fresh! How can I help you?',
           emotion: 'neutral',
           actions: [],
           timestamp: new Date()
@@ -68,8 +69,8 @@ class AIAgent {
     } catch (err) {
       console.error('❌ processMessage error:', err.message);
       return {
-        response: "Sorry, I couldn't process that.",
-        emotion: "confused",
+        response: "I'm here for you. Could you say that again?",
+        emotion: 'caring',
         actions: [],
         timestamp: new Date()
       };
@@ -79,121 +80,73 @@ class AIAgent {
   async analyzeMessage(message, user) {
     const prompt = `
 Analyze this message from an elderly user: "${message}"
-User context: ${JSON.stringify(user.profile)}
-Respond ONLY with JSON:
+User context: ${JSON.stringify(user.profile || {})}
+Respond ONLY with valid JSON, no explanation, no code blocks:
 {
   "emotion": "happy|sad|worried|angry|neutral|confused",
   "intent": "health|medication|social|emergency|reminder|general",
   "urgency": "low|medium|high|critical",
   "keywords": [],
-  "requiresAction": true/false,
+  "requiresAction": false,
   "suggestedActions": []
-}
-No explanation. No code blocks.`.trim();
+}`.trim();
 
     const raw = await this.queryGroq(prompt);
-    console.log('🧠 Analysis raw output:\n', raw);
-
     const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     try {
       return JSON.parse(cleaned);
     } catch (e) {
       console.error('❌ Failed to parse analysis JSON:', cleaned);
-      throw new Error('Bad analysis response');
+      return {
+        emotion: 'neutral',
+        intent: 'general',
+        urgency: 'low',
+        keywords: [],
+        requiresAction: false,
+        suggestedActions: []
+      };
     }
   }
 
   async generateResponse(message, history, user, analysis) {
     const prompt = `
-You are Empatha, a kind, simple-speaking AI for elderly care.
+You are Empatha, a kind, simple-speaking AI companion for elderly care.
 
-User profile: ${JSON.stringify(user.profile)}
+User profile: ${JSON.stringify(user.profile || {})}
 Recent conversation: ${JSON.stringify(history.slice(-5))}
-Analysis: ${JSON.stringify(analysis)}
+Message analysis: ${JSON.stringify(analysis)}
+User message: "${message}"
 
-Respond in JSON format:
+Respond ONLY with valid JSON, no explanation, no code blocks:
 {
-  "response": "Your friendly helpful reply",
-  "actions": [
-    {
-      "type": "setReminder",
-      "params": {
-        "description": "Take your pills",
-        "datetime": "2025-06-25T16:20:00Z"
-      }
-    },
-    {
-      "type": "scheduleMedication",
-      "params": {
-        "name": "pills",
-        "time": "2025-06-25T16:20:00Z",
-        "frequency": "once"
-      }
-    }
-  ]
+  "response": "Your friendly helpful reply here",
+  "actions": []
 }
 
-✅ All datetime values must be ISO 8601 format (e.g., "2025-06-25T16:20:00Z").
-✅ Only use the following action types:
-- setReminder
-- scheduleMedication
-- emergencyAlert
-- checkHealth
-- getWeather
-
-Do NOT include any unsupported types. Do not include code blocks.
-`.trim();
+Only add actions if truly needed. Supported action types: setReminder, scheduleMedication, emergencyAlert, checkHealth, getWeather.
+All datetime values must be ISO 8601 format.`.trim();
 
     const raw = await this.queryGroq(prompt);
-    console.log('🤖 Response raw output:\n', raw);
-
     const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     try {
       return JSON.parse(cleaned);
     } catch (e) {
       console.error('❌ Failed to parse response JSON:', cleaned);
-      throw new Error('Bad response format');
+      return {
+        response: cleaned.length > 10 ? cleaned : "I'm here to help. Can you tell me more?",
+        actions: []
+      };
     }
   }
 
   async executeActions(actions, user) {
     const results = [];
-
     for (const act of actions || []) {
       const handler = this.tools[act.type];
-
       if (typeof handler !== 'function') {
         console.warn(`⚠️ Unsupported action type: ${act.type}`);
-        results.push({
-          action: act.type,
-          success: false,
-          error: `Unsupported action type: ${act.type}`
-        });
         continue;
       }
-
-      if (act.type === 'setReminder') {
-        if (!act.params?.description || !act.params?.datetime) {
-          results.push({
-            action: act.type,
-            success: false,
-            error: 'Missing description or datetime for reminder.'
-          });
-          continue;
-        }
-      }
-
-      if (act.type === 'scheduleMedication') {
-        if (!act.params?.name || !act.params?.time) {
-          results.push({
-            action: act.type,
-            success: false,
-            error: 'Missing name or time for medication reminder.'
-          });
-          continue;
-        }
-      }
-
       try {
         const result = await handler(act.params, user);
         results.push({ action: act.type, success: true, result });
@@ -202,7 +155,6 @@ Do NOT include any unsupported types. Do not include code blocks.
         results.push({ action: act.type, success: false, error: err.message });
       }
     }
-
     return results;
   }
 
@@ -228,10 +180,7 @@ Do NOT include any unsupported types. Do not include code blocks.
 
   async getWeather(params, user) {
     const location = params?.location || user?.profile?.location;
-
-    if (!location) {
-      throw new Error('Missing location. Please provide a location or add one to your profile.');
-    }
+    if (!location) throw new Error('Missing location');
 
     const res = await axios.get('https://api.openweathermap.org/data/2.5/weather', {
       params: {
@@ -263,9 +212,10 @@ Do NOT include any unsupported types. Do not include code blocks.
       const res = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
-          model: 'llama3-70b-8192',
+          model: 'llama3-8b-8192',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.5
+          temperature: 0.5,
+          max_tokens: 500
         },
         {
           headers: {
@@ -276,7 +226,7 @@ Do NOT include any unsupported types. Do not include code blocks.
       );
       return res.data.choices[0].message.content;
     } catch (error) {
-      console.error('❌ queryGroq error:', error.response?.data || error.message);
+      console.error('❌ queryGroq error:', JSON.stringify(error.response?.data) || error.message);
       throw new Error('Groq API call failed');
     }
   }
