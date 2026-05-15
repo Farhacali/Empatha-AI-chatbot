@@ -13,28 +13,13 @@ const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
 
-// ✅ Environment Variables
-const {
-  GROQ_API_KEY,
-  WEATHER_API_KEY,
-  MONGODB_URI,
-  JWT_SECRET,
-  PORT = 3000
-} = process.env;
-
-// ✅ Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB connection
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('✅ MongoDB connected'))
-.catch((err) => console.error('❌ MongoDB error:', err));
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB error:', err));
 
-// ✅ Routes
 try {
   app.use('/api/user', require('./routes/user'));
   app.use('/api/chat', require('./routes/chat'));
@@ -45,13 +30,11 @@ try {
   console.error('⚠️ Error loading routes:', err.message);
 }
 
-// ✅ Serve frontend statically
 app.use(express.static(path.join(__dirname, 'frontend')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// ✅ Fallback responses (used when GROQ API fails)
 const fallbackResponses = [
   "I'm here to listen. How are you feeling today?",
   "That sounds important to you. Tell me more.",
@@ -61,11 +44,10 @@ const fallbackResponses = [
 const getFallbackResponse = () =>
   fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
 
-// ✅ Socket.IO + GROQ integration
 io.on('connection', (socket) => {
   console.log(`📡 Connected: ${socket.id}`);
+  console.log('🔑 GROQ Key loaded:', !!process.env.GROQ_API_KEY);
 
-  // ✅ Per-socket conversation history — each user gets their own memory
   const conversationHistory = [];
 
   socket.emit('response', {
@@ -74,46 +56,39 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', async ({ message, userId }) => {
-    console.log(`💬 ${userId}: ${message}`);
+    console.log(`💬 Message from ${userId}: ${message}`);
 
-    // ✅ Add user message to history before API call
     conversationHistory.push({ role: 'user', content: message });
-
-    // ✅ Trim history to last 20 messages to avoid token overflow
-    if (conversationHistory.length > 20) {
-      conversationHistory.splice(0, 2);
-    }
+    if (conversationHistory.length > 20) conversationHistory.splice(0, 2);
 
     try {
       const groqRes = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
-          model: 'llama3-70b-8192',
+          model: 'llama3-8b-8192',
           messages: [
             {
               role: 'system',
-              content: `You are Empatha, a warm and emotionally intelligent wellness companion.
+              content: `You are Empatha, a warm and emotionally intelligent wellness companion for elderly people.
 You remember everything said earlier in this conversation and build on it naturally.
 You ask thoughtful follow-up questions, notice patterns in how the user is feeling,
 and respond with genuine empathy. Never repeat the same phrase twice.
 Keep responses concise (2-4 sentences) and conversational, like a caring friend.`
             },
-            ...conversationHistory  // ✅ Full history sent with every request
+            ...conversationHistory
           ],
           temperature: 0.85,
           max_tokens: 150
         },
         {
           headers: {
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
       const reply = groqRes.data.choices[0].message.content.trim();
-
-      // ✅ Add assistant reply to history after API call
       conversationHistory.push({ role: 'assistant', content: reply });
 
       let emotion = 'neutral';
@@ -121,10 +96,11 @@ Keep responses concise (2-4 sentences) and conversational, like a caring friend.
       if (lower.includes('sorry') || lower.includes('understand')) emotion = 'caring';
       if (lower.includes('great') || lower.includes('happy')) emotion = 'happy';
 
+      console.log('✅ Groq replied:', reply.slice(0, 60));
       socket.emit('response', { response: reply, emotion });
 
     } catch (err) {
-      console.error('❌ GROQ error:', err.message);
+      console.error('❌ Groq API error:', JSON.stringify(err.response?.data) || err.message);
       socket.emit('response', {
         response: getFallbackResponse(),
         emotion: 'caring'
@@ -137,9 +113,7 @@ Keep responses concise (2-4 sentences) and conversational, like a caring friend.
   });
 });
 
-// ✅ Start server
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
-
