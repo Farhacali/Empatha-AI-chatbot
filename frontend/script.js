@@ -1,12 +1,10 @@
 // Connects to the same origin where your app is hosted
-/*const socket = io();
+const socket = io();
 
-// Chat input and button creation
 const messagesContainer = document.querySelector('.messages');
 const input = document.createElement('input');
 const sendBtn = document.createElement('button');
 
-// Style the input
 input.type = 'text';
 input.placeholder = 'Type your message...';
 Object.assign(input.style, {
@@ -21,7 +19,6 @@ Object.assign(input.style, {
   zIndex: 10
 });
 
-// Style the send button
 sendBtn.innerText = 'Send';
 Object.assign(sendBtn.style, {
   position: 'fixed',
@@ -39,7 +36,7 @@ Object.assign(sendBtn.style, {
 document.body.appendChild(input);
 document.body.appendChild(sendBtn);
 
-const userId = '59b99db4cfa9a34dcd7885b6'; // Replace or dynamically set
+const userId = localStorage.getItem('userId') || '59b99db4cfa9a34dcd7885b6';
 
 sendBtn.onclick = () => {
   const message = input.value.trim();
@@ -50,13 +47,17 @@ sendBtn.onclick = () => {
   showTypingIndicator();
 };
 
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendBtn.onclick();
+});
+
 socket.on('connect', () => {
-  console.log('✅ Connected:', socket.id);
+  console.log('✅ Socket connected:', socket.id);
 });
 
 socket.on('response', (data) => {
   removeTypingIndicator();
-  appendMessage('ai', data.response, data.emotion, data.actions);
+  appendMessage('ai', data.response, data.emotion, data.actions || []);
 });
 
 socket.on('reminder', (data) => {
