@@ -1,7 +1,4 @@
-
-     
-
- const axios = require('axios');
+const axios = require('axios');
 const UserModel = require('../models/User');
 const ConversationModel = require('../models/Conversation');
 const ReminderService = require('./ReminderService');
@@ -36,9 +33,22 @@ class AIAgent {
   async processMessage(message, userId, socket) {
     try {
       console.log('🧑 userId:', userId);
-      const user = await UserModel.findById(userId);
-      if (!user) throw new Error('User not found');
-      console.log('✅ User found:', user.name);
+      let user = null;
+      try {
+        user = await UserModel.findById(userId);
+      } catch (e) {
+        console.warn('⚠️ MongoDB not connected or user query failed.');
+      }
+      if (!user) {
+        console.warn(`⚠️ User ${userId} not found in DB. Using default profile.`);
+        user = {
+          _id: userId,
+          name: 'Friend',
+          profile: { location: 'Unknown', healthConditions: [] }
+        };
+      } else {
+        console.log('✅ User found:', user.name);
+      }
 
       const trimmedMsg = message.trim().toLowerCase();
       if (['start new conversation', 'reset'].includes(trimmedMsg)) {
@@ -81,7 +91,7 @@ class AIAgent {
     const prompt = `
 Analyze this message from an elderly user: "${message}"
 User context: ${JSON.stringify(user.profile || {})}
-Respond ONLY with valid JSON, no explanation, no code blocks:
+You MUST respond with ONLY valid JSON data and nothing else. Do not use markdown blocks.
 {
   "emotion": "happy|sad|worried|angry|neutral|confused",
   "intent": "health|medication|social|emergency|reminder|general",
@@ -91,12 +101,12 @@ Respond ONLY with valid JSON, no explanation, no code blocks:
   "suggestedActions": []
 }`.trim();
 
-    const raw = await this.queryGroq(prompt);
-    const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    const raw = await this.queryGroq(prompt, true);
     try {
+      const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(cleaned);
     } catch (e) {
-      console.error('❌ Failed to parse analysis JSON:', cleaned);
+      console.error('❌ Failed to parse analysis JSON:', raw);
       return {
         emotion: 'neutral',
         intent: 'general',
@@ -109,15 +119,18 @@ Respond ONLY with valid JSON, no explanation, no code blocks:
   }
 
   async generateResponse(message, history, user, analysis) {
+    const mem = this.memory.get(user._id) || [];
+    const memoryString = JSON.stringify(mem);
+
     const prompt = `
 You are Empatha, a kind, simple-speaking AI companion for elderly care.
 
 User profile: ${JSON.stringify(user.profile || {})}
-Recent conversation: ${JSON.stringify(history.slice(-5))}
 Message analysis: ${JSON.stringify(analysis)}
+Recent conversation memory: ${memoryString}
 User message: "${message}"
 
-Respond ONLY with valid JSON, no explanation, no code blocks:
+You MUST respond with ONLY valid JSON data and nothing else. Do not use markdown blocks.
 {
   "response": "Your friendly helpful reply here",
   "actions": []
@@ -126,14 +139,14 @@ Respond ONLY with valid JSON, no explanation, no code blocks:
 Only add actions if truly needed. Supported action types: setReminder, scheduleMedication, emergencyAlert, checkHealth, getWeather.
 All datetime values must be ISO 8601 format.`.trim();
 
-    const raw = await this.queryGroq(prompt);
-    const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    const raw = await this.queryGroq(prompt, true);
     try {
+      const cleaned = raw.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(cleaned);
     } catch (e) {
-      console.error('❌ Failed to parse response JSON:', cleaned);
+      console.error('❌ Failed to parse response JSON:', raw);
       return {
-        response: cleaned.length > 10 ? cleaned : "I'm here to help. Can you tell me more?",
+        response: "I'm here to help. Can you tell me more?",
         actions: []
       };
     }
@@ -159,23 +172,33 @@ All datetime values must be ISO 8601 format.`.trim();
   }
 
   async getConversationHistory(userId) {
-    return ConversationModel.find({ userId }).sort({ timestamp: -1 }).limit(10);
+    try {
+      return await ConversationModel.find({ userId }).sort({ timestamp: -1 }).limit(10);
+    } catch (e) {
+      console.warn('⚠️ Could not fetch history from DB. Using local memory.');
+      return [];
+    }
   }
 
   async saveConversation(userId, message, response) {
-    await new ConversationModel({
-      userId,
-      userMessage: message,
-      aiResponse: response,
-      timestamp: new Date()
-    }).save();
+    try {
+      await new ConversationModel({
+        userId,
+        userMessage: message,
+        aiResponse: response,
+        timestamp: new Date()
+      }).save();
+    } catch (e) {
+      console.warn('⚠️ Could not save conversation to DB:', e.message);
+    }
   }
 
   updateMemory(userId, message, response) {
     if (!this.memory.has(userId)) this.memory.set(userId, []);
     const mem = this.memory.get(userId);
-    mem.push({ message, response, timestamp: new Date() });
-    if (mem.length > 20) mem.shift();
+    mem.push({ role: 'user', content: message });
+    mem.push({ role: 'assistant', content: response });
+    if (mem.length > 10) mem.splice(0, mem.length - 10);
   }
 
   async getWeather(params, user) {
@@ -207,16 +230,22 @@ All datetime values must be ISO 8601 format.`.trim();
     );
   }
 
-  async queryGroq(prompt) {
+  async queryGroq(prompt, formatAsJson = false) {
     try {
+      const payload = {
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'system', content: prompt }],
+        temperature: 0.5,
+        max_tokens: 500
+      };
+      
+      if (formatAsJson) {
+        payload.response_format = { type: 'json_object' };
+      }
+
       const res = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
-        {
-          model: 'llama3-8b-8192',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.5,
-          max_tokens: 500
-        },
+        payload,
         {
           headers: {
             Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
@@ -233,3 +262,4 @@ All datetime values must be ISO 8601 format.`.trim();
 }
 
 module.exports = AIAgent;
+
